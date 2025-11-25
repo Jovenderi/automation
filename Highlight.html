@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Highlight</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --container-bg: #f8f9fa;
+            --border-color: #e9ecef;
+            --button-color: #ff6a00;
+            --button-text: #ffffff;
+            --input-bg: #ffffff;
+            --textarea-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --container-bg: #2d2d2d;
+            --border-color: #404040;
+            --button-color: #ff6a00;
+            --button-text: #ffffff;
+            --input-bg: #333333;
+            --textarea-bg: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--button-color);
+            color: var(--button-text);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .excel-extractor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--container-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            max-width: 500px;
+            margin: 0 auto 30px;
+        }
+
+        .file-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .file-input {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .sheet-selector {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            min-width: 200px;
+        }
+
+        .extract-btn {
+            background: var(--button-color);
+            color: var(--button-text);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .global-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .global-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .global-input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            width: 150px;
+        }
+
+        .color-picker-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 30px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .color-display {
+            padding: 5px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .container-navigation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            background: var(--container-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button.active {
+            background: var(--button-color);
+            color: var(--button-text);
+        }
+
+        .nav-button:hover {
+            background: var(--button-color);
+            color: var(--button-text);
+        }
+
+        .containers {
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            display: none;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .container.active {
+            display: block;
+        }
+
+        .container-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .column h3 {
+            margin-bottom: 10px;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .input-field {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .textarea-container {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .textarea-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .textarea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: var(--button-color);
+            color: var(--button-text);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .code-textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--textarea-bg);
+            color: var(--text-color);
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        @media (max-width: 768px) {
+            .container-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .textarea-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .global-inputs {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .container-navigation {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+    
+    <div class="header">
+        <h1>Widget Highlight</h1>
+    </div>
+
+    <div class="excel-extractor">
+        <div class="file-input-container">
+            <input type="file" id="fileInput" accept=".xlsx,.xls" class="file-input" onchange="loadExcelFile(event)">
+            <select id="sheetSelector" class="sheet-selector" onchange="selectSheet()">
+                <option value="">Select a sheet</option>
+            </select>
+            <button class="extract-btn" onclick="extractData()">Extract Data</button>
+        </div>
+		
+    </div>
+
+    <div class="global-inputs">
+		<div class="global-input-group">
+            <label>Product:</label>
+            <select id="input85" onchange="showSelection()" class="global-input" required>
+				<option value="">--Select--</option>
+				<option value="casino">Casino</option>
+				<option value="live">Live Casino</option>
+				<option value="lotto">Lotto</option>
+				<option value="chess">Chess</option>
+				<option value="virtual">Virtual</option>
+			  </select>
+
+        </div>
+        <div class="global-input-group">
+            <label>Advert Name:</label>
+            <input type="text" id="input81" class="global-input" >
+        </div>
+        <div class="global-input-group">
+            <label>Game Codes:</label>
+            <input type="text" id="input82" class="global-input" >
+        </div>
+        <div class="color-picker-group">
+            <label>Promo Color 1:</label>
+            <div class="color-picker-container">
+                <input type="color" id="color1" class="color-picker" value="#ff6a00" onchange="updateColorDisplay('color1', 'colorDisplay1')">
+                <div id="colorDisplay1" class="color-display">#ff6a00</div>
+            </div>
+        </div>
+		
+        <div class="color-picker-group">
+            <label>Promo Color 2:</label>
+            <div class="color-picker-container">
+                <input type="color" id="color2" class="color-picker" value="#000000" onchange="updateColorDisplay('color2', 'colorDisplay2')">
+                <div id="colorDisplay2" class="color-display">#000000</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-navigation">
+        <button class="nav-button active" onclick="showContainer(1)">China</button>
+        <button class="nav-button" onclick="showContainer(2)">Vietname</button>
+        <button class="nav-button" onclick="showContainer(3)">Thailand</button>
+        <button class="nav-button" onclick="showContainer(4)">Korea</button>
+        <button class="nav-button" onclick="showContainer(5)">Indonesia</button>
+        <button class="nav-button" onclick="showContainer(6)">Cambodia</button>
+        <button class="nav-button" onclick="showContainer(7)">Japan</button>
+        <button class="nav-button" onclick="showContainer(8)">India</button>
+    </div>
+
+    <div class="containers">
+        <div class="container active" id="container1">
+            <div class="container-content">
+                <div class="column">
+                    <h3>English</h3>
+                    <input type="text" id="input1" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input2" class="input-field" placeholder="Sub">
+                    <input type="text" id="input3" class="input-field" placeholder="Title">
+                    <input type="text" id="input4" class="input-field" placeholder="Description">
+                    <input type="text" id="input5" class="input-field" placeholder="Link">
+                </div>
+                <div class="column">
+                    <h3>Localized</h3>
+                    <input type="text" id="input6" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input7" class="input-field" placeholder="Sub">
+                    <input type="text" id="input8" class="input-field" placeholder="Title">
+                    <input type="text" id="input9" class="input-field" placeholder="Description">
+                    <input type="text" id="input10" class="input-field" placeholder="Link">
+                </div>
+            </div>
+            <div class="textarea-container">
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea1')">Copy</button>
+                    </div>
+                    <textarea id="textarea1" class="code-textarea" readonly></textarea>
+                </div>
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea2')">Copy</button>
+                    </div>
+                    <textarea id="textarea2" class="code-textarea" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="container2">
+            <div class="container-content">
+                <div class="column">
+                    <h3>English</h3>
+                    <input type="text" id="input11" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input12" class="input-field" placeholder="Sub">
+                    <input type="text" id="input13" class="input-field" placeholder="Title">
+                    <input type="text" id="input14" class="input-field" placeholder="Description">
+                    <input type="text" id="input15" class="input-field" placeholder="Link">
+                </div>
+                <div class="column">
+                    <h3>Localized</h3>
+                    <input type="text" id="input16" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input17" class="input-field" placeholder="Sub">
+                    <input type="text" id="input18" class="input-field" placeholder="Title">
+                    <input type="text" id="input19" class="input-field" placeholder="Description">
+                    <input type="text" id="input20" class="input-field" placeholder="Link">
+                </div>
+            </div>
+            <div class="textarea-container">
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea3')">Copy</button>
+                    </div>
+                    <textarea id="textarea3" class="code-textarea" readonly></textarea>
+                </div>
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea4')">Copy</button>
+                    </div>
+                    <textarea id="textarea4" class="code-textarea" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="container3">
+            <div class="container-content">
+                <div class="column">
+                    <h3>English</h3>
+                    <input type="text" id="input21" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input22" class="input-field" placeholder="Sub">
+                    <input type="text" id="input23" class="input-field" placeholder="Title">
+                    <input type="text" id="input24" class="input-field" placeholder="Description">
+                    <input type="text" id="input25" class="input-field" placeholder="Link">
+                </div>
+                <div class="column">
+                    <h3>Localized</h3>
+                    <input type="text" id="input26" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input27" class="input-field" placeholder="Sub">
+                    <input type="text" id="input28" class="input-field" placeholder="Title">
+                    <input type="text" id="input29" class="input-field" placeholder="Description">
+                    <input type="text" id="input30" class="input-field" placeholder="Link">
+                </div>
+            </div>
+            <div class="textarea-container">
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea5')">Copy</button>
+                    </div>
+                    <textarea id="textarea5" class="code-textarea" readonly></textarea>
+                </div>
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea6')">Copy</button>
+                    </div>
+                    <textarea id="textarea6" class="code-textarea" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="container4">
+            <div class="container-content">
+                <div class="column">
+                    <h3>English</h3>
+                    <input type="text" id="input31" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input32" class="input-field" placeholder="Sub">
+                    <input type="text" id="input33" class="input-field" placeholder="Title">
+                    <input type="text" id="input34" class="input-field" placeholder="Description">
+                    <input type="text" id="input35" class="input-field" placeholder="Link">
+                </div>
+                <div class="column">
+                    <h3>Localized</h3>
+                    <input type="text" id="input36" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input37" class="input-field" placeholder="Sub">
+                    <input type="text" id="input38" class="input-field" placeholder="Title">
+                    <input type="text" id="input39" class="input-field" placeholder="Description">
+                    <input type="text" id="input40" class="input-field" placeholder="Link">
+                </div>
+            </div>
+            <div class="textarea-container">
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea7')">Copy</button>
+                    </div>
+                    <textarea id="textarea7" class="code-textarea" readonly></textarea>
+                </div>
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea8')">Copy</button>
+                    </div>
+                    <textarea id="textarea8" class="code-textarea" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="container5">
+            <div class="container-content">
+                <div class="column">
+                    <h3>English</h3>
+                    <input type="text" id="input41" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input42" class="input-field" placeholder="Sub">
+                    <input type="text" id="input43" class="input-field" placeholder="Title">
+                    <input type="text" id="input44" class="input-field" placeholder="Description">
+                    <input type="text" id="input45" class="input-field" placeholder="Link">
+                </div>
+                <div class="column">
+                    <h3>Localized</h3>
+                    <input type="text" id="input46" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input47" class="input-field" placeholder="Sub">
+                    <input type="text" id="input48" class="input-field" placeholder="Title">
+                    <input type="text" id="input49" class="input-field" placeholder="Description">
+                    <input type="text" id="input50" class="input-field" placeholder="Link">
+                </div>
+            </div>
+            <div class="textarea-container">
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea9')">Copy</button>
+                    </div>
+                    <textarea id="textarea9" class="code-textarea" readonly></textarea>
+                </div>
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea10')">Copy</button>
+                    </div>
+                    <textarea id="textarea10" class="code-textarea" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="container6">
+            <div class="container-content">
+                <div class="column">
+                    <h3>English</h3>
+                    <input type="text" id="input51" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input52" class="input-field" placeholder="Sub">
+                    <input type="text" id="input53" class="input-field" placeholder="Title">
+                    <input type="text" id="input54" class="input-field" placeholder="Description">
+                    <input type="text" id="input55" class="input-field" placeholder="Link">
+                </div>
+                <div class="column">
+                    <h3>Localized</h3>
+                    <input type="text" id="input56" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input57" class="input-field" placeholder="Sub">
+                    <input type="text" id="input58" class="input-field" placeholder="Title">
+                    <input type="text" id="input59" class="input-field" placeholder="Description">
+                    <input type="text" id="input60" class="input-field" placeholder="Link">
+                </div>
+            </div>
+            <div class="textarea-container">
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea11')">Copy</button>
+                    </div>
+                    <textarea id="textarea11" class="code-textarea" readonly></textarea>
+                </div>
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea12')">Copy</button>
+                    </div>
+                    <textarea id="textarea12" class="code-textarea" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="container7">
+            <div class="container-content">
+                <div class="column">
+                    <h3>English</h3>
+                    <input type="text" id="input61" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input62" class="input-field" placeholder="Sub">
+                    <input type="text" id="input63" class="input-field" placeholder="Title">
+                    <input type="text" id="input64" class="input-field" placeholder="Description">
+                    <input type="text" id="input65" class="input-field" placeholder="Link">
+                </div>
+                <div class="column">
+                    <h3>Localized</h3>
+                    <input type="text" id="input66" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input67" class="input-field" placeholder="Sub">
+                    <input type="text" id="input68" class="input-field" placeholder="Title">
+                    <input type="text" id="input69" class="input-field" placeholder="Description">
+                    <input type="text" id="input70" class="input-field" placeholder="Link">
+                </div>
+            </div>
+            <div class="textarea-container">
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea13')">Copy</button>
+                    </div>
+                    <textarea id="textarea13" class="code-textarea" readonly></textarea>
+                </div>
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea14')">Copy</button>
+                    </div>
+                    <textarea id="textarea14" class="code-textarea" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="container8">
+            <div class="container-content">
+                <div class="column">
+                    <h3>English</h3>
+                    <input type="text" id="input71" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input72" class="input-field" placeholder="Sub">
+                    <input type="text" id="input73" class="input-field" placeholder="Title">
+                    <input type="text" id="input74" class="input-field" placeholder="Description">
+                    <input type="text" id="input75" class="input-field" placeholder="Link">
+                </div>
+                <div class="column">
+                    <h3>Localized</h3>
+                    <input type="text" id="input76" class="input-field" placeholder="Widget Title">
+                    <input type="text" id="input77" class="input-field" placeholder="Sub">
+                    <input type="text" id="input78" class="input-field" placeholder="Title">
+                    <input type="text" id="input79" class="input-field" placeholder="Description">
+                    <input type="text" id="input80" class="input-field" placeholder="Link">
+                </div>
+            </div>
+            <div class="textarea-container">
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea15')">Copy</button>
+                    </div>
+                    <textarea id="textarea15" class="code-textarea" readonly></textarea>
+                </div>
+                <div class="textarea-wrapper">
+                    <div class="textarea-header">
+                        <h4>Code</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('textarea16')">Copy</button>
+                    </div>
+                    <textarea id="textarea16" class="code-textarea" readonly></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let workbook = null;
+        let currentSheet = null;
+
+        // Excel cell mapping
+        const cellMapping = {
+            'C2': 'input1', 'D2': 'input2', 'E2': 'input3', 'F2': 'input4', 'G2': 'input5',
+            'C3': 'input6', 'D3': 'input7', 'E3': 'input8', 'F3': 'input9', 'G3': 'input10',
+            'C5': 'input11', 'D5': 'input12', 'E5': 'input13', 'F5': 'input14', 'G5': 'input15',
+            'C6': 'input16', 'D6': 'input17', 'E6': 'input18', 'F6': 'input19', 'G6': 'input20',
+            'C8': 'input21', 'D8': 'input22', 'E8': 'input23', 'F8': 'input24', 'G8': 'input25',
+            'C9': 'input26', 'D9': 'input27', 'E9': 'input28', 'F9': 'input29', 'G9': 'input30',
+            'C11': 'input31', 'D11': 'input32', 'E11': 'input33', 'F11': 'input34', 'G11': 'input35',
+            'C12': 'input36', 'D12': 'input37', 'E12': 'input38', 'F12': 'input39', 'G12': 'input40',
+            'C14': 'input41', 'D14': 'input42', 'E14': 'input43', 'F14': 'input44', 'G14': 'input45',
+            'C15': 'input46', 'D15': 'input47', 'E15': 'input48', 'F15': 'input49', 'G15': 'input50',
+            'C17': 'input51', 'D17': 'input52', 'E17': 'input53', 'F17': 'input54', 'G17': 'input55',
+            'C18': 'input56', 'D18': 'input57', 'E18': 'input58', 'F18': 'input59', 'G18': 'input60',
+            'C20': 'input61', 'D20': 'input62', 'E20': 'input63', 'F20': 'input64', 'G20': 'input65',
+            'C21': 'input66', 'D21': 'input67', 'E21': 'input68', 'F21': 'input69', 'G21': 'input70',
+            'C23': 'input71', 'D23': 'input72', 'E23': 'input73', 'F23': 'input74', 'G23': 'input75',
+            'C24': 'input76', 'D24': 'input77', 'E24': 'input78', 'F24': 'input79', 'G24': 'input80',
+            'B26': 'input81', 'B27': 'input82'
+        };
+
+        function loadExcelFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                workbook = XLSX.read(data, { type: 'array' });
+                
+                // Populate sheet selector
+                const sheetSelector = document.getElementById('sheetSelector');
+                sheetSelector.innerHTML = '<option value="">Select a sheet</option>';
+                
+                workbook.SheetNames.forEach(sheetName => {
+                    const option = document.createElement('option');
+                    option.value = sheetName;
+                    option.textContent = sheetName;
+                    sheetSelector.appendChild(option);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function selectSheet() {
+            const sheetName = document.getElementById('sheetSelector').value;
+            if (!sheetName || !workbook) return;
+            
+            currentSheet = workbook.Sheets[sheetName];
+        }
+
+        function extractData() {
+            if (!currentSheet) {
+                alert('Please select a sheet first');
+                return;
+            }
+
+            // Extract data from Excel cells
+            for (const [cellAddress, inputId] of Object.entries(cellMapping)) {
+                const cell = currentSheet[cellAddress];
+                const value = cell ? cell.v : '';
+                const inputElement = document.getElementById(inputId);
+                if (inputElement) {
+                    inputElement.value = value;
+                }
+            }
+
+            // Update all textareas after extraction
+            updateAllTextareas();
+        }
+
+        function showContainer(containerNum) {
+            // Hide all containers
+            document.querySelectorAll('.container').forEach(container => {
+                container.classList.remove('active');
+            });
+            
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected container
+            document.getElementById(`container${containerNum}`).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Update textareas for the active container
+            updateTextareasForContainer(containerNum);
+        }
+
+        function updateTextareasForContainer(containerNum) {
+			
+            const startIndex = (containerNum - 1) * 10 + 1;
+            const textareaIndex1 = (containerNum - 1) * 2 + 1;
+            const textareaIndex2 = (containerNum - 1) * 2 + 2;
+            
+            // Update Column 1 textarea
+            updateTextarea(textareaIndex1, startIndex, startIndex + 4);
+            
+            // Update Column 2 textarea
+            updateTextarea(textareaIndex2, startIndex + 5, startIndex + 9);
+        }
+
+        function updateTextarea(textareaNum, startInput, endInput) {
+    const textarea = document.getElementById(`textarea${textareaNum}`);
+    if (!textarea) return;
+
+    // Get global inputs
+    const product = document.getElementById('input85').value || '';
+    const games = document.getElementById('input82').value || '';
+
+    // Get input values for this block
+    const title = document.getElementById(`input${startInput}`).value || `input ${startInput}`;
+    const subtitle = document.getElementById(`input${startInput + 1}`).value || `input ${startInput + 1}`;
+    const content = document.getElementById(`input${startInput + 2}`).value || `input ${startInput + 2}`;
+    const description = document.getElementById(`input${startInput + 3}`).value || `input ${startInput + 3}`;
+    const link = document.getElementById(`input${startInput + 4}`).value || `input ${startInput + 4}`;
+
+    // Build template with Vue gv.lan and JS link
+    const template = `
+<ProductHighlight product="${product}" title="${title}" subtitle=""
+  games="${games}"
+  widget-background="https://doc.188contents.com//star4-content/images/casino/producthighlightstest/product-highlight-desktop.webp"
+  title-icon="https://doc.188contents.com//taptap-content/images/producthighlightstest/icon-product-widget-blank.webp"
+  promo-color-1="none"
+  promo-color-2="none"
+>
+  <div :style="{height:breakpoints.smAndDown?'90px':'90px', padding: breakpoints.smAndDown?'5px':'0px'}">
+    <SMediaBanner class="promo-button w-full" style="border-width: 0px;">
+      <div class="h-full">
+        <div class="flex" style="height:80px">
+          <div class="flex grow flex-col px-3 py-3 rounded-l-lg" style="background-color: rgba(61, 32, 15, 0.7); border-left: 1px solid #82391c; border-top: 1px solid #82391c; border-bottom: 1px solid #82391c;">
+            <h1 class="text-caption text-light--high font-semibold">${subtitle}</h1>
+            <h2 class="text-light--medium line-clamp-1 text-[.625rem] mb-2">${content}</h2>
+            <!-- Link 1 -->
+            <a :href="\`/\${gv.lan}${link}\`" class="decoration-none font-semibold text-primary text-xs">
+              ${description} <SIcon class="opacity-60 h-1">icon-chevron-right</SIcon>
+            </a>
+          </div>
+          <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8.6 66.4">
+            <path d="M0,66.4c0-4.7,3.8-8.5,8.5-8.5V8.5C3.9,8.5,0.1,4.7,0.1,0h-0.1v66.4H0Z" style="fill: rgba(61, 32, 15, 0.7); stroke: none;"/>
+            <path d="M0.1,0 C0.1,4.7,3.9,8.5,8.5,8.5 M8.5,57.9 C3.8,57.9,0,61.7,0,66.4" style="fill: none; stroke: #82391c; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;"/>
+          </svg>
+          <div class="h-full py-3 overflow-hidden shrink-0" style="flex-basis:1px;">
+            <div class="border-2 border-secondary--lighten-1 border-dashed h-full"></div>
+          </div>
+          <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8.6 66.4">
+            <path d="M8.6,0h0c0,4.7-3.8,8.5-8.5,8.5v49.4c4.7,0,8.5,3.8,8.5,8.5h2V0h0" style="fill: rgba(61, 32, 15, 0.7); stroke: none;"/>
+            <path d="M8.6,0 C8.6,4.7,4.8,8.5,0.1,8.5 M0.1,57.9 C4.8,57.9,8.6,61.7,8.6,66.4" style="fill: none; stroke: #82391c; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;"/>
+          </svg>
+          <div class="flex items-center px-2 rounded-r-lg" style="background-color: rgba(61, 32, 15, 0.7); border-right: 1px solid #82391c; border-top: 1px solid #82391c; border-bottom: 1px solid #82391c;">
+            <!-- Link 2 -->
+            <SButton icon-only :href="\`/\${gv.lan}${link}\`">
+              <img :style="{width:breakpoints.smAndDown?'50px':'55px'}" class="mr-1" src="https://doc.188contents.com/taptap-content/images/producthighlightstest/${product}_icon.webp" alt="">
+            </SButton>
+          </div>
+        </div>
+      </div>
+    </SMediaBanner>
+  </div>
+</ProductHighlight>
+`;
+
+    // Assign to textarea
+    textarea.value = template;
+}
+
+        function updateAllTextareas() {
+            for (let i = 1; i <= 8; i++) {
+                updateTextareasForContainer(i);
+            }
+        }
+
+        function copyToClipboard(textareaId) {
+            const textarea = document.getElementById(textareaId);
+            textarea.select();
+            document.execCommand('copy');
+            
+            // Show feedback
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.style.background = '#28a745';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = 'var(--button-color)';
+            }, 1000);
+        }
+
+        function updateColorDisplay(colorPickerId, displayId) {
+            const colorPicker = document.getElementById(colorPickerId);
+            const display = document.getElementById(displayId);
+            display.textContent = colorPicker.value;
+            
+            // Update all textareas when color changes
+            updateAllTextareas();
+        }
+		
+		function showSelection() {
+		  // Update all textareas when product type changes
+		  updateAllTextareas();
+		}
+		
+		
+		
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                themeToggle.textContent = '🌙 Dark Mode';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = '☀️ Light Mode';
+            }
+        }
+
+        // Add event listeners for input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners to all input fields
+            for (let i = 1; i <= 82; i++) {
+                const input = document.getElementById(`input${i}`);
+                if (input) {
+                    input.addEventListener('input', function() {
+                        // Find which container this input belongs to
+                        const containerNum = Math.ceil((i - 1) / 10) || 1;
+                        if (containerNum <= 8) {
+                            updateTextareasForContainer(containerNum);
+                        }
+                    });
+                }
+            }
+
+            // Add event listeners to global inputs
+            document.getElementById('input81').addEventListener('input', updateAllTextareas);
+            document.getElementById('input82').addEventListener('input', updateAllTextareas);
+            
+            // Initialize textareas
+            updateAllTextareas();
+        });
+    </script>
+</body>
+</html>
