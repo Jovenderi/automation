@@ -215,11 +215,15 @@ function updateAdvertName() {
 function updateCode() {
   const gameName = document.getElementById("gameName").value;
   const gameCode = document.getElementById("gameCode").value;
-  const type = document.getElementById("type").value;
+
+  const typeRaw = document.getElementById("type").value;
+  const type = typeRaw.toLowerCase();   // <-- force lowercase
+
   const provider = document.getElementById("provider").value;
   const isLogin = document.getElementById("addLoginIf").checked;
 
   const slug = slugify(gameName);
+
   const img = gameName
       ? `https://doc.188contents.com/taptap-content/images/${type}/${provider}/${slug}/${slug}.gif`
       : "";
@@ -229,7 +233,7 @@ function updateCode() {
   const code =
 `<FloatingBanner${loginAttr}>
   <GameLauncher v-slot="{ openGame }" product="${type}" game="${gameCode}" 
-    data-track-content data-content-name="Floating banner - (PD-${type})"
+    data-track-content data-content-name="Floating banner - (PD-${typeRaw})"
     data-content-piece="Floating banner">
     <img alt="${slug}" src="${img}" @click="openGame()"/>
   </GameLauncher>
@@ -238,6 +242,7 @@ function updateCode() {
   document.getElementById("output").value = code;
   document.getElementById("preview").src = img;
 }
+
 
 /* ---------- MAIN UPDATE CALL ---------- */
 function updateAll() {
