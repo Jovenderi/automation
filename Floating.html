@@ -151,9 +151,9 @@ const providersByType = {
   Live: ['Bull-Bull','Bull-Fight','FanTan','aesexy','agiledeal','asiagaming','baccarat','db','dblive','evolution','ezugi','featured','n2live','oncasino','playace','pragmatic','sexybaccarat','teenpatti','threecardwin','threepictures','wmcasino','worldentertainment','zodiacracing'],
   Chess: ['jili','kaiyuan','kingmidas','mpoker','v8poker'],
   Lotto: ['7star','agiledeal','agilenbg','australia','australialucky28','canada','india-lottery','keno','ladder','lotto','lucky28','lucky5','new-lobby','p3','pk10','rapid5d','sea-lottery','sode','super-lottery','tc-gaming','tcg_cn','tcg_sea','tcg_vn','xj'],
-  Esports: ['Option 7','Option 8','Option 9']
+  
 };
-
+const providersSelect = document.getElementById("provider");
 /* ---------- PREFIX FOR ADVERT ---------- */
 const typePrefix = {
   Casino: "csn",
@@ -170,16 +170,24 @@ function slugify(text) {
 
 /* ---------- PROVIDER UPDATE ---------- */
 function updateProviders() {
+  
   const type = document.getElementById('type').value;
+  	
   const providerSelect = document.getElementById('provider');
   providerSelect.innerHTML = "";
-
+  
+if (type === "Esports") {	
+	providersSelect.disabled = true;
+    } else {
   providersByType[type].forEach(p => {
     const opt = document.createElement("option");
     opt.value = p;
     opt.textContent = p;
     providerSelect.appendChild(opt);
   });
+ 
+    }
+	
 }
 
 /* ---------- ADVERT NAME GENERATION ---------- */
@@ -224,9 +232,14 @@ function updateCode() {
 
   const slug = slugify(gameName);
 
-  const img = gameName
-      ? `https://doc.188contents.com/taptap-content/images/${type}/${provider}/${slug}/${slug}.gif`
-      : "";
+  
+  let img = "";
+
+	if (!provider) {
+	  img = `https://doc.188contents.com/taptap-content/images/${type}/${slug}/${slug}.gif`;
+	} else {
+	  img = `https://doc.188contents.com/taptap-content/images/${type}/${provider}/${slug}/${slug}.gif`;
+	}	
 
   const loginAttr = isLogin ? ` v-if="uv.sessionD.login"` : "";
 
