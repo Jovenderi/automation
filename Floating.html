@@ -178,7 +178,9 @@ function updateProviders() {
   
 if (type === "Esports") {	
 	providersSelect.disabled = true;
-    } else {
+    } 
+	else {
+	providersSelect.disabled = false;	
   providersByType[type].forEach(p => {
     const opt = document.createElement("option");
     opt.value = p;
