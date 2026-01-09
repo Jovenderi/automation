@@ -779,7 +779,12 @@
 
     // Get global inputs
     const product = document.getElementById('input85').value || '';
+	const bigproduct = product
+  ? product.charAt(0).toUpperCase() + product.slice(1)
+  : '';		
+			
     const games = document.getElementById('input82').value || '';
+	const matomoname = document.getElementById('input1').value || '';		
 
     // Get input values for this block
     const title = document.getElementById(`input${startInput}`).value || `input ${startInput}`;
@@ -792,6 +797,7 @@
     const template = `
 <ProductHighlight product="${product}" title="${title}" subtitle=""
   games="${games}"
+  data-track-content data-content-name="${matomoname} - (PD-WDGT-${bigproduct})" data-content-piece="${matomoname} - WDGT - (PD-WDGT-${bigproduct})"
   widget-background="https://doc.188contents.com/taptap-content/images/casino/producthighlightstest/product-highlight-desktop-${product}.webp"
   title-icon="https://doc.188contents.com//taptap-content/images/producthighlightstest/icon-product-widget-blank.webp"
   promo-color-1="none"
