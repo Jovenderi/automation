@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Newsletter Builder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+    --bg:#f5f6f7;
+    --panel:#ffffff;
+    --border:#e3e3e3;
+    --text:#222;
+    --muted:#777;
+    --accent:#ff8a00;
+}
+.dark{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --border:#2a2f3a;
+    --text:#f2f2f2;
+    --muted:#aaa;
+}
+*{box-sizing:border-box}
+body{
+    margin:0;
+    font-family:Inter, system-ui, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+}
+.app{
+    display:grid;
+    grid-template-columns:35% 65%;
+    height:100vh;
+}
+.panel{
+    padding:16px;
+    overflow:auto;
+}
+.left{
+    background:var(--panel);
+    border-right:1px solid var(--border);
+}
+.right{
+    display:flex;
+    flex-direction:column;
+}
+.card{
+	flex-wrap: wrap;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:14px;
+}
+h4{
+    margin:0 0 10px;
+    font-size:13px;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+}
+input, textarea{
+    width:100%;
+    padding:9px 10px;
+    margin-bottom:8px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+    font-size:13px;
+}
+textarea{resize:none;height:60px}
+button{
+    padding:8px 12px;
+    border-radius:8px;
+    border:none;
+    font-size:13px;
+    cursor:pointer;
+}
+.primary{background:var(--accent);color:#fff}
+.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.row{
+    display:flex;
+    gap:8px;
+}
+.game{
+    border:1px dashed var(--border);
+    border-radius:10px;
+    margin-bottom:10px;
+    overflow:hidden;
+}
+.game-header{
+    padding:10px 12px;
+    background:rgba(0,0,0,.03);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+}
+.dark .game-header{background:rgba(255,255,255,.04)}
+.game-body{
+    padding:12px;
+    display:none;
+}
+.game.open .game-body{display:block}
+.actions{
+    display:flex;
+    gap:6px;
+}
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+}
+.icon-btn{
+    width:34px;
+    height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:transparent;
+    font-size:16px;
+}
+.preview-wrap{
+    flex:1;
+    overflow:auto;
+    padding:16px;
+}
+.preview{
+    max-width:620px;
+    margin:auto;
+    background:#fff;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 8px 30px rgba(0,0,0,.15);
+}
+.dark .preview{background:#fff}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<!-- LEFT -->
+<div class="panel left">
+<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    
+    <!-- Checkbox -->
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;">
+        <input type="checkbox" id="useAltLogo" onchange="toggleCountryOption()">
+        Create AlternateLink
+    </label>
+
+    <!-- Country Select -->
+    <select id="countryVersion"
+            
+            onchange="render()"
+            style="min-width:140px;padding:8px;border-radius:8px;border:1px solid var(--border);">
+        <option value="">Country</option>
+        <option value="ENCN">ENCN</option>
+        <option value="ZHCN">ZHCN</option>
+        <option value="ENVN">ENVN</option>
+        <option value="VIVN">VIVN</option>
+        <option value="ENTH">ENTH</option>
+        <option value="THTH">THTH</option>
+        <option value="ENID">ENID</option>
+        <option value="IDID">IDID</option>
+        <option value="ENJP">ENJP</option>
+        <option value="JPJP">JPJP</option>
+    </select>
+
+</div>
+	
+<div class="card">
+<h4>HTML Settings</h4>
+<input id="fileName" placeholder="File name (region_pdnewsletter-mmyy)" oninput="updateAltLink()">
+	<input id="htmlTitle" placeholder="HTML Title" oninput="render()">
+<input id="altLink" placeholder="Alternate Link" readonly>	
+</div>
+
+
+<div class="card">
+<h4>Game Sections</h4>
+<div id="games"></div>
+<button class="primary" onclick="addGame()">+ Add Game</button>
+</div>
+	
+
+</div>
+
+<!-- RIGHT -->
+<div class="panel right">
+
+<div class="topbar">
+<strong>Live Preview</strong>
+<div class="row">
+    <input type="file" id="importFile" accept=".html" hidden>
+    <button class="icon-btn" onclick="document.getElementById('importFile').click()" title="Import HTML">📥</button>
+    <button class="icon-btn" onclick="toggleDark()" id="darkIcon">🌙</button>
+    <button class="primary" onclick="downloadHTML()">Download</button>
+</div>
+</div>
+
+<div class="preview-wrap">
+<div class="preview" id="preview"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+let dark=false;
+
+function toggleDark(){
+    dark=!dark;
+    document.body.classList.toggle("dark",dark);
+    document.getElementById("darkIcon").textContent = dark ? "☀️" : "🌙";
+}
+	
+
+function addGame(data={}){
+    const g=document.createElement("div");
+    g.className="game open";
+    g.innerHTML=`
+    <div class="game-header" onclick="this.parentElement.classList.toggle('open')">
+        <strong>${data.game||"New Game"}</strong>
+        <div class="actions">
+            <button class="ghost" onclick="event.stopPropagation();duplicateGame(this)">Duplicate</button>
+            <button class="ghost" onclick="event.stopPropagation();this.closest('.game').remove();render()">Remove</button>
+        </div>
+    </div>
+    <div class="game-body">
+        <input placeholder="Provider Name" class="provider" value="${data.provider||""}">
+        <input placeholder="Game Name" class="gameName" value="${data.game||""}">
+        <input placeholder="Image Name" class="image" value="${data.image||""}">
+        <textarea placeholder="Description" class="desc">${data.desc||""}</textarea>
+        <div class="row">
+            <input placeholder="Button Name" class="btnName" value="${data.btnName||""}">
+            <input placeholder="Button Link" class="btnLink" value="${data.btnLink||""}">
+        </div>
+    </div>
+    `;
+    g.querySelectorAll("input,textarea").forEach(i=>i.oninput=render);
+    document.getElementById("games").appendChild(g);
+    render();
+}
+
+function duplicateGame(btn){
+    const g=btn.closest(".game");
+    addGame({
+        provider:g.querySelector(".provider").value,
+        game:g.querySelector(".gameName").value,
+        image:g.querySelector(".image").value,
+        desc:g.querySelector(".desc").value,
+        btnName:g.querySelector(".btnName").value,
+        btnLink:g.querySelector(".btnLink").value
+    });
+}
+	
+function toggleCountryOption(){
+    const checkbox = document.getElementById("useAltLogo");
+    const select = document.getElementById("countryVersion");
+
+    if(checkbox.checked){
+        select.disabled = false;
+    }else{
+        select.disabled = true;
+        select.value = ""; // reset selection
+    }
+
+    render();
+}	
+
+function render(){
+    const title=document.getElementById("htmlTitle").value||"HTML Title";
+    const alt=document.getElementById("altLink").value||"#";
+	const useAltLogo = document.getElementById("useAltLogo").checked;
+	const country = document.getElementById("countryVersion").value;
+	const COUNTRY_TABLES = {
+    ENCN: `
+<table id="ENCN" align="center" bgcolor="#262626" cellpadding="0" cellspacing="0" style="margin: 0 auto; padding: 0; text-align: center; background-color: #262626; border-collapse: collapse;" width="600">
+ <tbody>
+  <tr>
+   <td colspan="2"><a href="https://www.taptap.asia/en-gb/partnership/fcbayern" target="_blank"><img src="https://www.188affiliates.com/newsletter/images/CN/EN-Footer-taptap_01.jpg?v=202506191800" style="display:block;" /> </a></td>
+  </tr>
+  <tr>
+   <td><a href="https://www.taptap.asia/license/anjouan" target="_blank"><img src="https://www.188affiliates.com/newsletter/images/CN/EN-Footer-taptap_02.jpg" style="display:block;" /> </a></td>
+   <td><a href="https://www.taptap.asia/en-gb/corporate-affairs/responsible-gaming" target="_blank"><img src="https://www.188affiliates.com/newsletter/images/CN/EN-Footer-taptap_03.jpg?v=202506191800" style="display:block;" /> </a></td>
+  </tr>
+  <tr>
+   <td colspan="2"><a href="https://www.taptap.asia/en-gb/corporate-affairs/privacy-policy" target="_blank"><img src="https://www.188affiliates.com/newsletter/images/CN/EN-Footer-taptap_04.jpg?v=202506191800" style="display: block; width: 600px;" /> </a></td>
+  </tr>
+ </tbody>
+</table>
+`,
+    ZHCN: `
+<table id="ZHCN" align="center" bgcolor="#262626" cellpadding="0" cellspacing="0" style="margin: 0 auto; padding: 0; text-align: center; background-color: #262626; border-collapse: collapse;" width="600">
+ <tbody>
+  <tr>
+   <td colspan="2"><a href="https://www.taptap.asia/zh-cn/partnership/fcbayern" target="_blank"><img src="https://www.188affiliates.com/newsletter/images/CN/CN-Footer-taptap_01.jpg" style="display:block;" /> </a></td>
+  </tr>
+  <tr>
+   <td><a href="https://www.taptap.asia/license/anjouan" target="_blank"><img src="https://www.188affiliates.com/newsletter/images/CN/CN-Footer-taptap_02.jpg" style="display:block;" /> </a></td>
+   <td><a href="https://www.taptap.asia/zh-cn/corporate-affairs/responsible-gaming" target="_blank"><img src="https://www.188affiliates.com/newsletter/images/CN/CN-Footer-taptap_03.jpg" style="display:block;" /> </a></td>
+  </tr>
+  <tr>
+   <td colspan="2"><a href="https://www.taptap.asia/zh-cn/corporate-affairs/privacy-policy" target="_blank"><img src="https://www.188affiliates.com/newsletter/images/CN/CN-Footer-taptap_04.jpg?v=202506181731" style="display: block; width: 600px;" /> </a></td>
+  </tr>
+ </tbody>
+</table>
+`,
+    ENVN: `
+<table id="ENVN" style="background-color: #080808; width: 100%; max-width: 600px; border-radius: 8px 8px 0 0; padding: 24px; margin: 0 auto; background-image: linear-gradient(to bottom, #080808, #0F0F0F, #080808);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 16px; text-align: center;" colspan="2">OUR PARTNERS</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding-bottom: 16px; text-align: center;" colspan="2">Official Regional Partner<br>of FC Bayern Munich</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.one88bet.net/en-gb/partnership/fcbayern" target="_blank">
+                            <img style="width: 90px; max-width: 90px;" src="https://sbbanner.com/newsletter/newsletter-template-2024/fc-noise2.png" width="90">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 0 24px 0; text-align: center;" colspan="2">SOCIAL MEDIA</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.facebook.com/188VN" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-facebook.png" alt="facebook" width="32">
+                        </a>
+                        <a href="https://www.youtube.com/c/188BETVietNamofficial" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-youtube.png" alt="youtube" width="32">
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table style="background-color: #111111; width: 100%; max-width: 600px; border-radius: 0 0 8px 8px; padding: 24px; color: #FFFFFF; margin: 0 auto; background-image: linear-gradient(to bottom, #111111, #121212, #131313);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">SECURITY AND TRUST</td>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">RESPONSIBLE GAMING</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.one88bet.net/license/anjouan" target="_blank">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/anjuoan-hd.png" alt="anjouan logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.one88bet.net/en-gb/corporate-affairs/responsible-gaming" target="_blank">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/18plus-hd.png" alt="18+ logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 24px;" colspan="2">
+                        <hr style="border-width: 0.5px; border-color: #bababa">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; color: #c5c5c5; text-align: center; padding: 24px;" colspan="2">Taptap is operated by CyberArena Ltd. registration number: 34056, registered address: 9 Barrack Road, Belize City, Belize. Taptap is regulated by the Government of the Autonomous Island of Anjouan, Union of Comoros.  Taptap has passed all regulatory compliance and is legally authorized to conduct gaming operations for any and all games of chance and wagering.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; padding-bottom: 24px" colspan="2"><a href="https://www.one88bet.net/en-gb/corporate-affairs/privacy-policy" style="text-decoration: underline; font-size: 12px; color: #c5c5c5;">Unsubscribe</a></td>
+                </tr>
+            </tbody>
+        </table>	
+`,
+	VIVN: `
+<table id="VIVN" style="background-color: #080808; width: 100%; max-width: 600px; border-radius: 8px 8px 0 0; padding: 24px; margin: 0 auto; background-image: linear-gradient(to bottom, #080808, #0F0F0F, #080808);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 16px; text-align: center;" colspan="2">ĐỐI TÁC CỦA CHÚNG TÔI</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding-bottom: 16px; text-align: center;" colspan="2">Đối Tác Khu Vực Chính Thức<br>Của CLB Bayern Munich</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.one88bet.net/vi-vn/partnership/fcbayern" target="_blank">
+                            <img style="width: 90px; max-width: 90px;" src="https://sbbanner.com/newsletter/newsletter-template-2024/fc-noise2.png" width="90">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 0 24px 0; text-align: center;" colspan="2">Truyền Thông</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.facebook.com/188VN" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-facebook.png" alt="facebook" width="32">
+                        </a>
+                        <a href="https://www.youtube.com/c/188BETVietNamofficial" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-youtube.png" alt="youtube" width="32">
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table style="background-color: #111111; width: 100%; max-width: 600px; border-radius: 0 0 8px 8px; padding: 24px; color: #FFFFFF; margin: 0 auto; background-image: linear-gradient(to bottom, #111111, #121212, #131313);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">BẢO ĐẢM VÀ TÍN NHIỆM</td>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">Chơi Có Trách Nhiệm</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.one88bet.net/license/anjouan" target="_blank">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/anjuoan-hd.png" alt="anjouan logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.one88bet.net/vi-vn/corporate-affairs/responsible-gaming" target="_blank">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/18plus-hd.png" alt="18+ logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 24px;" colspan="2">
+                        <hr style="border-width: 0.5px; border-color: #bababa">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; color: #c5c5c5; text-align: center; padding: 24px;" colspan="2">Taptap được điều hành bởi CyberArena Ltd. số đăng ký: 34056, địa chỉ đăng ký: 9 Barrack Road, Belize City, Belize. Taptap được quản lý bởi Government of the Autonomous Island of Anjouan, Union of Comoros. Taptap đã vượt qua tất cả các quy định tuân thủ và được phép hợp pháp để tiến hành các hoạt động trò chơi cho bất kỳ và tất cả các trò chơi may rủi và cá cược.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; padding-bottom: 24px" colspan="2"><a href="https://www.one88bet.net/vi-vn/corporate-affairs/privacy-policy" style="text-decoration: underline; font-size: 12px; color: #c5c5c5;">Unsubscribe</a></td>
+                </tr>
+            </tbody>
+        </table>
+`,
+	ENTH: `
+<table id="ENTH" style="background-color: #111111; width: 100%; max-width: 600px; border-radius: 8px; padding: 24px; color: #FFFFFF; margin: 0 auto; background-image: linear-gradient(to bottom, #111111, #121212, #131313);" cellspacing="0" cellpadding="0" width="600">
+        <tbody>
+            <tr>
+                <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 16px; text-align: center;" colspan="2">OUR PARTNERS</td>
+            </tr>
+            <tr>
+                <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding-bottom: 16px; text-align: center;" colspan="2">Official Regional Partner<br>of FC Bayern Munich</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;" colspan="2">
+                    <a href="https://www.188betmail.com/en-gb/partnership/fcbayern" target="_blank">
+                        <img style="width: 90px; max-width: 90px;" src="https://sbbanner.com/newsletter/newsletter-template-2024/fc-noise2.png" width="90">
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 0 24px 0; text-align: center;" colspan="2">SOCIAL MEDIA</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;" colspan="2">
+                    <a href="https://www.facebook.com/taptapAsiaTH" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                        <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-facebook.png" alt="facebook" style="width: 32px;" width="32">
+                    </a>
+                    <a href="https://x.com/taptapthailand" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                        <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-x.png" alt="twitter X" style="width: 32px;" width="32">
+                    </a>
+                    <a href="https://www.youtube.com/@taptapThailand" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                        <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-youtube.png" alt="youtube" style="width: 32px;" width="32">
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">SECURITY AND TRUST</td>
+                <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">RESPONSIBLE GAMING</td>
+            </tr>
+            <tr>
+                <td style="padding: 0 50px;">
+                    <a href="https://www.188bet.com/license/anjouan" target="_blank">
+                        <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/anjuoan-hd.png" alt="anjouan logo" style="height: 40px;" height="40">
+                    </a>
+                </td>
+                <td style="padding: 0 50px;">
+                    <a href="https://www.188bet.com/en-gb/corporate-affairs/responsible-gaming" target="_blank">
+                        <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/18plus-hd.png" alt="18+ logo" style="height: 40px;" height="40">
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-top: 24px;" colspan="2">
+                    <hr style="border-width: 0.5px; border-color: #bababa">
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size: 12px; color: #c5c5c5; text-align: center; padding: 24px;" colspan="2">Taptap is operated by CyberArena Ltd. registration number: 34056, registered address: 9 Barrack Road, Belize City, Belize. Taptap is regulated by the Government of the Autonomous Island of Anjouan, Union of Comoros.  Taptap has passed all regulatory compliance and is legally authorized to conduct gaming operations for any and all games of chance and wagering.</td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding-bottom: 24px" colspan="2"><a href="https://www.188bet.com/en-gb/corporate-affairs/privacy-policy" style="text-decoration: underline; font-size: 12px; color: #c5c5c5;">Unsubscribe</a></td>
+            </tr>
+        </tbody>
+    </table>	
+`,
+	THTH: `
+<table id="THTH" style="background-color: #111111; width: 100%; max-width: 600px; border-radius: 8px 8px 0 0 ; padding: 24px; color: #FFFFFF; margin: 0 auto; background-image: linear-gradient(to bottom, #111111, #121212, #131313);" cellspacing="0" cellpadding="0" width="600">
+            <tr>
+                <td class="footer-titles" style="color: #a4a4a4; font-weight: 600; font-size: 12px; padding: 5px 0; text-align: center;">พาร์ทเนอร์</td>
+            </tr>
+            <tr>
+                <td>
+                    <table style="width: 100%; padding: 10px 0; text-align: center; margin: 0 auto;" cellspacing="0" cellpadding="0">
+                        <tr>
+                            
+                            <td class="footer-partners-text" valign="top" style="color: #808080; width: 50%; font-size: 12px; padding: 0 5px;">พาร์ทเนอร์<br>บาเยิร์น มิวนิค</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table style="width: 100%; text-align: center;" cellspacing="0" cellpadding="0">
+                        <tr>
+                            
+                            <td style="width: 50%;">
+                                <a href="https://www.188family.com/th-th/partnership/fcbayern" target="_blank" style="color: #ec0867; text-decoration: underline;">
+                                <img class="footer-icons" id="fc-logo" style="height: auto; max-height: 90px; width: 90px; margin: 10px 0; filter: none;" data-darkreader-inline-bgimage src="https://www.sbbanner.com/newsletter/newsletter-template-2024/fc-noise2.png" width="90"></a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            
+        </table>
+        <table class="footer-parent-table2" cellspacing="0" cellpadding="0" style="background-color: #151515; height: auto; width: auto; max-width: 600px; border-radius: 0 0 8px 8px; padding: 15px; margin: 0 auto;" width="600">
+            <tr>
+                <td>
+                    <table style="width: 100%; text-align: center; margin: 0 auto; border-bottom: 1px solid rgb(40, 40, 40);" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td class="footer-titles" style="color: #a4a4a4; font-weight: 600; font-size: 12px; padding: 5px 0; width: 50%;">ปลอดภัย และ น่าเชื่อถือ</td>
+                            <td class="footer-titles" style="color: #a4a4a4; font-weight: 600; font-size: 12px; padding: 5px 0; width: 50%;">เล่นเกมด้วยความรับผิดชอบ</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%;">
+                                <a href="https://www.188family.com/license/anjouan" style="text-decoration: none;">
+                                    <img class="footer-icons2" src="https://sbbanner.com/newsletter/common/img/anjuoan.png" style="height: auto; max-height: 40px; margin: 10px 0;" height="40">
+                                </a>
+                            </td>
+                            <td style="width: 50%;">
+                                <a href="https://www.188family.com/th-th/corporate-affairs/responsible-gaming" target="_blank" style="text-decoration: none;"> <!-- https://www.[domain]/[lang]/corporate-affairs/responsible-gaming-->
+                                    <img class="footer-icons2" src="https://sbbanner.com/newsletter/common/img/18plus.png" style="height: auto; max-height: 40px; margin: 10px 5px;" height="40">
+                                </a>
+                                
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table style="width: 100%; padding-top: 10px; text-align: center;" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td class="footer-copyright-text" style="color: #808080; padding-bottom: 10px; font-size: 12px; text-align: center;">ขอสงวนลิขสิทธิ์ ©2025 188BET</td>
+                        </tr>
+                        <tr>
+                            <td class="footer-copyright-text" style="color: #808080; padding-bottom: 10px; font-size: 12px; text-align: center;">หากต้องการยกเลิกการรับจดหมายข่าว กรุณาดูรายละเอียดเพิ่มเติมได้ที่ 
+                                <a href="https://www.188family.com/th-th/corporate-affairs/privacy-policy" style="text-decoration: none;">
+                                    <button class="link" style="background-color: transparent !important; border: none; outline: none; padding: 0; margin: 0; font-size: 12px; color: #FF8A00; font-weight: 400;">นโยบายความเป็นส่วนตัว</button>
+                                    </a>หรือติดต่อฝ่ายบริการลูกค้าของเรา</td>
+                        </tr>
+                        <tr style="box-sizing: border-box;">
+                            <td class="footer-copyright-text" style="box-sizing: border-box; color: #808080; padding-bottom: 10px; font-size: 12px; text-align: center;">
+                                ข้อควรทราบเกี่ยวกับนโยบายความเป็นส่วนตัว: ข้อความนี้ (รวมถึงเอกสารใดๆ ที่แนบมา) ถือว่าเป็นความลับและอาจมีความเป็นส่วนบุคคล หากคุณได้รับอีเมลฉบับนี้ที่เกิดขึ้นจากความผิดพลาด กรุณาส่งอีเมลกลับไปยังผู้ส่ง และทำการลบอีเมลฉบับนี้ออกจากกล่องจดหมายทันที ซึ่งการใช้ประโยชน์โดยไม่ได้อนุญาตหรือทำการเผยแพร่ทั้งหมดหรือบางส่วนของข้อความดังกล่าว ถือว่าเป็นสิ่งห้ามอย่างเคร่งครัด
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+`,
+		
+    ENID: `
+<table id="ENID" style="background-color: #080808; width: 100%; max-width: 600px; border-radius: 8px 8px 0 0; padding: 24px; margin: 0 auto; background-image: linear-gradient(to bottom, #080808, #0F0F0F, #080808);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 16px; text-align: center;" colspan="2">OUR PARTNERS</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding-bottom: 16px; text-align: center;" colspan="2">Official Regional Partner<br>of FC Bayern Munich</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.188sukses.com/en-gb/partnership/fcbayern" target="_blank">
+                            <img style="width: 90px; max-width: 90px;" src="https://188affiliates.com/newsletter/newsletter-template-2024/fc-noise2.png" width="90">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 0 24px 0; text-align: center;" colspan="2">SOCIAL MEDIA</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.facebook.com/taptapindonesia" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-facebook.png" alt="facebook" width="32">
+                        </a>
+                        <a href="https://x.com/taptapindo" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-x.png" alt="twitter X" width="32">
+                        </a>
+                        <a href="https://www.youtube.com/@taptapindonesia" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-youtube.png" alt="youtube" width="32">
+                        </a>
+                        <a href="https://www.instagram.com/taptap_indo/" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-instagram.png" alt="instagram" width="32">
+                        </a>
+                        <a href="https://t.me/taptapindo" style="text-decoration: none; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-telegram.png" alt="telegram" width="32">
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table style="background-color: #111111; width: 100%; max-width: 600px; border-radius: 0 0 8px 8px; padding: 24px; color: #FFFFFF; margin: 0 auto; background-image: linear-gradient(to bottom, #111111, #121212, #131313);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">SECURITY AND TRUST</td>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">RESPONSIBLE GAMING</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.188bet.com/license/anjouan" target="_blank">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/anjuoan-hd.png" alt="anjouan logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.188sukses.com/en-gb/corporate-affairs/responsible-gaming" target="_blank">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/18plus-hd.png" alt="18+ logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 24px;" colspan="2">
+                        <hr style="border-width: 0.5px; border-color: #bababa">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; color: #c5c5c5; text-align: center; padding: 24px;" colspan="2">Taptap is operated by CyberArena Ltd. registration number: 34056, registered address: 9 Barrack Road, Belize City, Belize. Taptap is regulated by the Government of the Autonomous Island of Anjouan, Union of Comoros.  Taptap has passed all regulatory compliance and is legally authorized to conduct gaming operations for any and all games of chance and wagering.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; padding-bottom: 24px" colspan="2"><a href="https://www.188sukses.com/en-gb/corporate-affairs/privacy-policy" style="text-decoration: underline; font-size: 12px; color: #c5c5c5;">Unsubscribe</a></td>
+                </tr>
+            </tbody>
+        </table>	
+`,
+    IDID: `
+<table id="IDID" style="background-color: #080808; width: 100%; max-width: 600px; border-radius: 8px 8px 0 0; padding: 24px; margin: 0 auto; background-image: linear-gradient(to bottom, #080808, #0F0F0F, #080808);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 16px; text-align: center;" colspan="2">MITRA KAMI</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding-bottom: 16px; text-align: center;" colspan="2">Sponsor Regional Resmi<br>FC Bayern Munich</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.188sukses.com/id-id/partnership/fcbayern" target="_blank">
+                            <img style="width: 90px; max-width: 90px;" src="https://188affiliates.com/newsletter/newsletter-template-2024/fc-noise2.png" width="90">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 0 24px 0; text-align: center;" colspan="2">MEDIA SOSIAL</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.facebook.com/taptapindonesia" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-facebook.png" alt="facebook" width="32">
+                        </a>
+                        <a href="https://x.com/taptapindo" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-x.png" alt="twitter X" width="32">
+                        </a>
+                        <a href="https://www.youtube.com/@taptapindonesia" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-youtube.png" alt="youtube" width="32">
+                        </a>
+                        <a href="https://www.instagram.com/taptap_indo/" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-instagram.png" alt="instagram" width="32">
+                        </a>
+                        <a href="https://t.me/taptapindo" style="text-decoration: none; width: 32px;">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/white-telegram.png" alt="telegram" width="32">
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table style="background-color: #111111; width: 100%; max-width: 600px; border-radius: 0 0 8px 8px; padding: 24px; color: #FFFFFF; margin: 0 auto; background-image: linear-gradient(to bottom, #111111, #121212, #131313);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">AMAN DAN TERPERCAYA</td>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">TANGGUNG JAWAB JUDI</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.188bet.com/license/anjouan" target="_blank">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/anjuoan-hd.png" alt="anjouan logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.188sukses.com/id-id/corporate-affairs/responsible-gaming" target="_blank">
+                            <img src="https://188affiliates.com/newsletter/taptap-newsletter-assets/footer/18plus-hd.png" alt="18+ logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 24px;" colspan="2">
+                        <hr style="border-width: 0.5px; border-color: #bababa">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; color: #c5c5c5; text-align: center; padding: 24px;" colspan="2">Taptap dioperasikan oleh CyberArena Ltd. nomor registrasi: 34056, alamat terdaftar: 9 Barrack Road, Belize City, Belize. Taptap diatur oleh Government of the Autonomous Island of Anjouan, Union of Comoros. Taptap telah memenuhi semua kepatuhan regulasi dan secara hukum diizinkan untuk melakukan operasi permainan untuk semua jenis permainan peluang dan taruhan.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; padding-bottom: 24px" colspan="2"><a href="https://www.188sukses.com/id-id/corporate-affairs/privacy-policy" style="text-decoration: underline; font-size: 12px; color: #c5c5c5;">Unsubscribe</a></td>
+                </tr>
+            </tbody>
+        </table>	
+`,
+    ENJP: `
+<table id="ENJP" style="background-color: #080808; width: 100%; max-width: 600px; border-radius: 8px 8px 0 0; padding: 24px; margin: 0 auto; background-image: linear-gradient(to bottom, #080808, #0F0F0F, #080808);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 16px; text-align: center;" colspan="2">OUR PARTNERS</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding-bottom: 16px; text-align: center;" colspan="2">Official Regional Partner<br>of FC Bayern Munich</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.188bet.com/en-gb/partnership/fcbayern" target="_blank">
+                            <img style="width: 90px; max-width: 90px;" src="https://sbbanner.com/newsletter/newsletter-template-2024/fc-noise2.png" width="90">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 0 24px 0; text-align: center;" colspan="2">SOCIAL MEDIA</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://x.com/JP_taptap" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-x.png" alt="twitter X" width="32">
+                        </a>
+                        <a href="https://www.youtube.com/channel/UCVx_d83mlzPYfhiisxPkfQg" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-youtube.png" alt="youtube" width="32">
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table style="background-color: #111111; width: 100%; max-width: 600px; border-radius: 0 0 8px 8px; padding: 24px; color: #FFFFFF; margin: 0 auto; background-image: linear-gradient(to bottom, #111111, #121212, #131313);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">SECURITY AND TRUST</td>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">RESPONSIBLE GAMING</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.188bet.com/license/anjouan" target="_blank">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/anjuoan-hd.png" alt="anjouan logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.188bet.com/en-gb/corporate-affairs/responsible-gaming" target="_blank">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/18plus-hd.png" alt="18+ logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 24px;" colspan="2">
+                        <hr style="border-width: 0.5px; border-color: #bababa">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; color: #c5c5c5; text-align: center; padding: 24px;" colspan="2">Taptap is operated by CyberArena Ltd. registration number: 34056, registered address: 9 Barrack Road, Belize City, Belize. Taptap is regulated by the Government of the Autonomous Island of Anjouan, Union of Comoros.  Taptap has passed all regulatory compliance and is legally authorized to conduct gaming operations for any and all games of chance and wagering.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; padding-bottom: 24px" colspan="2"><a href="https://www.188bet.com/en-gb/corporate-affairs/privacy-policy" style="text-decoration: underline; font-size: 12px; color: #c5c5c5;">Unsubscribe</a></td>
+                </tr>
+            </tbody>
+        </table>
+`,
+    JPJP: `
+<table id="JPJP" style="background-color: #080808; width: 100%; max-width: 600px; border-radius: 8px 8px 0 0; padding: 24px; margin: 0 auto; background-image: linear-gradient(to bottom, #080808, #0F0F0F, #080808);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 16px; text-align: center;" colspan="2">我々のパートナー</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding-bottom: 16px; text-align: center;" colspan="2">FC バイエルン・ミュンヘン<br>公式エリアパートナー</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://www.188bet.com/ja-jp/partnership/fcbayern" target="_blank">
+                            <img style="width: 90px; max-width: 90px;" src="https://sbbanner.com/newsletter/newsletter-template-2024/fc-noise2.png" width="90">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 0 24px 0; text-align: center;" colspan="2">ソーシャルメディア</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <a href="https://x.com/JP_taptap" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-x.png" alt="twitter X" width="32">
+                        </a>
+                        <a href="https://www.youtube.com/channel/UCVx_d83mlzPYfhiisxPkfQg" style="text-decoration: none; margin-right: 24px; width: 32px;">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/white-youtube.png" alt="youtube" width="32">
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table style="background-color: #111111; width: 100%; max-width: 600px; border-radius: 0 0 8px 8px; padding: 24px; color: #FFFFFF; margin: 0 auto; background-image: linear-gradient(to bottom, #111111, #121212, #131313);" cellspacing="0" cellpadding="0" width="600">
+            <tbody>
+                <tr>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">安全と信頼</td>
+                    <td style="font-size: 12px; font-weight: 600; color: #c5c5c5; padding: 24px 50px;">責任あるゲーム</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.188bet.com/license/anjouan" target="_blank">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/anjuoan-hd.png" alt="anjouan logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                    <td style="padding: 0 50px;">
+                        <a href="https://www.188bet.com/ja-jp/corporate-affairs/responsible-gaming" target="_blank">
+                            <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/footer/18plus-hd.png" alt="18+ logo" style="height: 40px;" height="40">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 24px;" colspan="2">
+                        <hr style="border-width: 0.5px; border-color: #bababa">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px; color: #c5c5c5; text-align: center; padding: 24px;" colspan="2">taptapはCyberArena Ltd.によって運営されており、登録番号は34056、登録住所は 9 Barrack Road, Belize City, Belizeです。当社は、Government of the Autonomous Island of Anjouan, Union of Comorosによって規制されています。 当社はすべての規制遵守に合格し、あらゆる博戯および賭博のゲーム運営を実施する法的認可を得ています。</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; padding-bottom: 24px" colspan="2"><a href="https://www.188bet.com/ja-jp/corporate-affairs/privacy-policy" style="text-decoration: underline; font-size: 12px; color: #c5c5c5;">Unsubscribe</a></td>
+                </tr>
+            </tbody>
+        </table>
+`
+		
+};
+	
+	
+    let html=`
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        @media (max-width: 600px) {
+            .responsive-tds {
+              display: inline-block;
+              width: 100%;
+            }
+        }
+        table,tbody,td {
+            margin: 0;
+            padding: 0;
+            border-collapse: collapse;
+        }
+    </style>
+</head>
+<body>
+    
+`;
+	
+if(useAltLogo){
+    html+=`
+<table style="box-sizing: border-box; margin: 10px auto;" class=" cke_show_border">
+        <tbody>
+            <tr style="box-sizing: border-box;">
+                <td style="box-sizing: border-box;">
+                    <img src="https://sbbanner.com/newsletter/taptap-newsletter-assets/taptap-logo.png" style="width: 120px;" width="120">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+`;
+}else{
+    html+=`
+<div style="margin: 0 auto; font-size: 12px; text-align: right; max-width: 600px;">
+        <p id="preview-text" style="margin: 0; padding: 0; display: none;">${title}</p>
+        <p id="cant-see-email" style="color: #808080; margin: 0; padding: 0;">Can't see email?</p>
+        <a id="alt-link" href="${alt}" style="color: #FF8A00;">Click here</a>
+    </div>	
+`;
+}	
+	
+	
+
+    document.querySelectorAll(".game").forEach((g,index)=>{
+        const n=index+1;
+        const i=g.querySelector(".image").value;
+
+        html+=`
+<table id="component-${n}" width="600" style="margin: 20px auto; width: 100%; max-width: 600px; color: rgb(0, 0, 0); border-radius: 0px 0px 8px 8px; overflow: hidden;">
+	<tbody>
+		<tr>
+			<td colspan="2">
+				<img id="game-banner-${n}" src="https://www.sbbanner.com/newsletter/newsletter-template-2026/images/1136x528-${i}.png" width="600" style="width: 100%; min-width: 240px; max-width: 600px; display: block;">
+			</td>
+		</tr>
+		<tr>
+			<td class="responsive-tds" style="background-color: rgb(0, 0, 0); vertical-align: top;"><table>
+				<tbody>
+					<tr>
+						<td style="padding: 15px 0px 0px 15px;">
+							<img id="game-icon-${n}" src="https://www.sbbanner.com/newsletter/newsletter-template-2026/images/320x320-${i}.png" width="80" height="80" style="width: 80px; height: 80px; border-radius: 8px; margin-right: 15px; min-width: 80px;">
+						</td>
+						<td style="width: 100%;">
+							<div style="vertical-align: top;">
+								<p id="game-provider-${n}" style="margin: 0px 0px 5px; padding: 0px; color: dimgray;">${g.querySelector(".provider").value}</p>
+								<p id="game-title-${n}" style="margin: 0px 0px 15px; padding: 0px; color: rgb(255, 255, 255);">${g.querySelector(".gameName").value}</p>
+								<div style="padding: 6px; background-color: rgb(255, 138, 0); border-radius: 4px; width: fit-content; background-image: linear-gradient(rgb(255, 146, 0), rgb(255, 113, 13), rgb(255, 106, 0));">
+									<a id="game-button-link-${n}" href="${g.querySelector(".btnLink").value}" style="text-decoration: none; color: white; font-weight: 600;">${g.querySelector(".btnName").value}</a>
+								</div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" style="min-width: 250px;">
+							<p id="game-description-${n}" style="text-align: justify; color: rgb(255, 255, 255); padding: 0px 15px;">${g.querySelector(".desc").value}</p>
+						</td>
+					</tr>
+				</tbody>
+				</table>
+			</td>
+			<td class="responsive-tds" style="background-color: rgb(0, 0, 0);">
+				<div style="padding: 15px;">
+					<img id="game-preview-${n}" src="https://www.sbbanner.com/newsletter/newsletter-template-2026/images/1176x973-${i}.png" width="300" style="width: 100%; min-width: 250px; max-width: 450px;">
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+`;
+    });
+
+if (country && COUNTRY_TABLES[country]) {
+    html += COUNTRY_TABLES[country];
+}	
+	
+    html+="</body></html>";
+    document.getElementById("preview").innerHTML=html;
+    window.generatedHTML=html;
+}
+
+
+	
+function downloadHTML() {
+  let name = document.getElementById("fileName").value.trim();
+
+  // default filename if empty
+  if (!name) {
+    name = "newsletter";
+  }
+
+  // remove any extension user might type
+  name = name.replace(/\.[^/.]+$/, "");
+
+  const blob = new Blob([window.generatedHTML], { type: "text/html" });
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+  a.download = name + ".html"; // always .html
+  a.click();
+
+  URL.revokeObjectURL(a.href);
+}	
+
+addGame();
+
+
+	
+document.getElementById("importFile").addEventListener("change", function () {
+  const file = this.files[0];
+  if (!file) return;
+
+  // Get filename without extension
+  const baseName = file.name.replace(/\.[^/.]+$/, "");
+
+  // Store for later use (download, UI, etc.)
+  window.importedFileName = baseName;
+
+  // Optional: auto-fill the filename input
+  const fileNameInput = document.getElementById("fileName");
+  if (fileNameInput) {
+    fileNameInput.value = baseName;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    importHTML(e.target.result);
+  };
+  reader.readAsText(file);
+});	
+	
+function updateAltLink() {
+  const fileName = document.getElementById("fileName").value.trim();
+  const altLink = document.getElementById("altLink");
+
+  // reset if empty
+  if (!fileName) {
+    altLink.value = "";
+    return;
+  }
+
+  // expected: region_pdnewsletter-mmyy
+  const match = fileName.match(/^([a-z]{2}-[a-z]{2})_pdnewsletter-(\d{2})(\d{2})$/i);
+  if (!match) {
+    altLink.value = "";
+    return;
+  }
+
+  const region = match[1].toLowerCase();
+  const mm = match[2];
+  const yy = match[3];
+  const mmyy = mm + yy;
+
+  const monthMap = {
+    "01": "01-Jan", "02": "02-Feb", "03": "03-Mar", "04": "04-Apr",
+    "05": "05-May", "06": "06-Jun", "07": "07-Jul", "08": "08-Aug",
+    "09": "09-Sep", "10": "10-Oct", "11": "11-Nov", "12": "12-Dec"
+  };
+
+  if (!monthMap[mm]) {
+    altLink.value = "";
+    return;
+  }
+
+  altLink.value =
+    `https://188affiliates.com/newsletter/newsletter-template-2026/${region}/${monthMap[mm]}/alternate/${region}_pdnewsletter-${mmyy}.html`;
+}
+
+function importHTML(htmlText) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlText, "text/html");
+
+    // Reset existing games
+    document.getElementById("games").innerHTML = "";
+
+    /* ---- Global settings ---- */
+    const title = doc.querySelector("title")?.textContent || "";
+    document.getElementById("htmlTitle").value = title;
+
+    const altLink = doc.querySelector("#alt-link")?.getAttribute("href") || "";
+    document.getElementById("altLink").value = altLink;
+
+    /* ---- Game components ---- */
+    const components = doc.querySelectorAll('table[id^="component-"]');
+
+    components.forEach((c, index) => {
+        const n = index + 1;
+
+        const bannerSrc = c.querySelector(`#game-banner-${n}`)?.getAttribute("src") || "";
+        const imageName = bannerSrc.split("1136x528-")[1]?.replace(".png", "") || "";
+
+        addGame({
+            provider: c.querySelector(`#game-provider-${n}`)?.textContent || "",
+            game: c.querySelector(`#game-title-${n}`)?.textContent || "",
+            desc: c.querySelector(`#game-description-${n}`)?.textContent || "",
+            image: imageName,
+            btnName: c.querySelector(`#game-button-link-${n}`)?.textContent || "",
+            btnLink: c.querySelector(`#game-button-link-${n}`)?.getAttribute("href") || ""
+        });
+    });
+
+    render();
+}
+	
+</script>
+</body>
+</html>
