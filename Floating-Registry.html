@@ -491,7 +491,7 @@ async function saveData(){
   };
 
   // If editing → UPDATE
-  if(editRowIndex){
+  if(editRowIndex !== null){
     data.action="update";
     data.rowIndex=editRowIndex;
   }
@@ -572,6 +572,8 @@ function copyCode(){
 function toggleDark(){
   document.body.classList.toggle("dark");
 }
+	
+
 
 gameName.oninput=()=>{updateAdvert();generateCode();}
 gameCode.oninput=generateCode;
@@ -587,44 +589,51 @@ function renderTable(){
   body.innerHTML="";
 
   registry
-  .filter(r=>activeFilter==="All"||r.productType===activeFilter)
-  .filter(r=>r.gameName?.toLowerCase().includes(search))
-  .forEach((r,i)=>{
+    .filter(r => activeFilter==="All" || r.productType===activeFilter)
+    .filter(r => (r.gameName || "").toLowerCase().includes(search))
+    .forEach((r,i)=>{
 
-    let imgSrc="";
-    if(r.productType==="Esports"){
-      imgSrc=`https://doc.188contents.com/taptap-content/images/esports/${r.gameName}/${r.gameName}.gif`;
-    }else{
-      imgSrc=`https://doc.188contents.com/taptap-content/images/${r.productType?.toLowerCase()}/${r.provider}/${r.gameName}/${r.gameName}.gif`;
-    }
+      let imgSrc="";
 
-    body.innerHTML+=`
-    <tr>
-      <td><img src="${imgSrc}" width="60"></td>
-	  <td>${r.advertName}</td>	  
-      <td>${r.gameName}</td>
-      <td>${r.gameCode}</td>
-      <td>${r.productType}</td>
-      <td>${r.provider||"-"}</td>
-      <td>
-        <button onclick="editRow(${i})">Edit</button>
-        <button class="danger" onclick="deleteRow(${i})">Delete</button>
-      </td>
-    </tr>`;
-  });
+      if(r.productType==="Esports"){
+        imgSrc=`https://doc.188contents.com/taptap-content/images/esports/${r.gameName}/${r.gameName}.gif`;
+      }else{
+        imgSrc=`https://doc.188contents.com/taptap-content/images/${(r.productType || "").toLowerCase()}/${r.provider}/${r.gameName}/${r.gameName}.gif`;
+      }
+
+      body.innerHTML += `
+        <tr>
+          <td><img src="${imgSrc}" width="60"></td>
+          <td>${r.adverName}</td>
+          <td>${r.gameName}</td>
+          <td>${r.gameCode}</td>
+          <td>${r.productType}</td>
+          <td>${r.provider || "-"}</td>
+          <td>
+            <button onclick="editRow(${i})">Edit</button>
+            <button class="danger" onclick="deleteRow(${i})">Delete</button>
+          </td>
+        </tr>
+      `;
+    });
 }
 
 /* ================= CLEAR FORM ================= */
 
 function clearForm(){
-  editRowIndex=null;
+  editRowIndex = null;   // VERY IMPORTANT
+
+  advertName.value="";
   gameName.value="";
   gameCode.value="";
   productType.value="";
   provider.innerHTML="";
+  provider.disabled=false;
   gifPreview.src="";
   codePreview.innerText="";
-}
+}	
+
+
 
 		  
 
