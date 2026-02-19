@@ -304,6 +304,35 @@ body.dark tbody tr:hover{
   width: 100%;
   table-layout: fixed;
 }	
+th[data-sort]{
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding-right: 20px;
+}
+
+th[data-sort]::after{
+  content: "";
+  position: absolute;
+  right: 8px;
+  opacity: 0.3;
+  font-size: 12px;
+}
+
+th.sort-asc::after{
+  content: "▲";
+  opacity: 1;
+}
+
+th.sort-desc::after{
+  content: "▼";
+  opacity: 1;
+}
+
+th[data-sort]:hover{
+  background: rgba(0,0,0,0.05);
+}
+	
 
 	
 </style>
@@ -400,38 +429,21 @@ body.dark tbody tr:hover{
 
 </div>
 
-<!--
-<div class="table-wrapper">
-<table>
-<thead>
-<tr>
-<th>GIF</th>
-<th>Advert Name</th>
-<th>Game Name</th>
-<th>Game Code</th>
-<th>Product Type</th>
-<th>Provider</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
-</div>
--->
-	
+
 <div class="table-section">
     <table>
       <thead>
-       <tr>
-		<th>GIF</th>
-		<th>Advert Name</th>
-		<th>Game Name</th>
-		<th>Game Code</th>
-		<th>Product Type</th>
-		<th>Provider</th>
-		<th>Action</th>
+		<tr>
+		  <th>Gif</th>
+		  <th data-sort="advertName" onclick="sortBy('advertName')">Advert Name</th>
+		  <th data-sort="gameName" onclick="sortBy('gameName')">Game Name</th>
+		  <th data-sort="gameCode" onclick="sortBy('gameCode')">Game Code</th>
+		  <th data-sort="productType" onclick="sortBy('productType')">Product Type</th>
+		  <th data-sort="provider" onclick="sortBy('provider')">Provider</th>
+		  <th>Action</th>
 		</tr>
-      </thead>
+		</thead>
+
       <tbody id="tableBody"></tbody>
     </table>
   </div>	
@@ -452,8 +464,37 @@ const providers={
 
 let registry=[];
 let activeFilter="All";
-let editRowIndex = null;	
+let editRowIndex = null;
+let sortField = null;
+let sortDirection = "asc";
+	
+function sortBy(field){
+  if(sortField === field){
+    sortDirection = sortDirection === "asc" ? "desc" : "asc";
+  } else {
+    sortField = field;
+    sortDirection = "asc";
+  }
 
+  updateSortUI();
+  renderTable();
+}
+
+function updateSortUI(){
+  document.querySelectorAll("th[data-sort]").forEach(th=>{
+    th.classList.remove("sort-asc","sort-desc");
+  });
+
+  if(sortField){
+    const activeTh = document.querySelector(`th[data-sort="${sortField}"]`);
+    if(activeTh){
+      activeTh.classList.add(sortDirection === "asc" ? "sort-asc" : "sort-desc");
+    }
+  }
+}
+	
+
+	
 function nextMonthCode(){
   const d=new Date();
   d.setMonth(d.getMonth()+1);
@@ -642,10 +683,22 @@ function renderTable(){
   const body=document.getElementById("tableBody");
   body.innerHTML="";
 
-  registry
-    .filter(r => activeFilter==="All" || r.productType===activeFilter)
-    .filter(r => (r.gameName || "").toLowerCase().includes(search))
-    .forEach((r,i)=>{
+  let filtered = registry
+  .filter(r => activeFilter==="All" || r.productType===activeFilter)
+  .filter(r => (r.gameName || "").toLowerCase().includes(search));
+
+if(sortField){
+  filtered.sort((a,b)=>{
+    let valA = (a[sortField] || "").toString().toLowerCase();
+    let valB = (b[sortField] || "").toString().toLowerCase();
+
+    if(valA < valB) return sortDirection==="asc" ? -1 : 1;
+    if(valA > valB) return sortDirection==="asc" ? 1 : -1;
+    return 0;
+  });
+}
+	
+filtered.forEach((r,i)=>{
 
       let imgSrc="";
 
