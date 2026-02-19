@@ -512,8 +512,9 @@ function prefix(type){
 }
 
 function updateAdvert(){
-  const game=gameName.value.toLowerCase().replace(/\s+/g,"-");
-  advertName.value=prefix(productType.value)+game+"-"+nextMonthCode();
+  const game=gameName.value;
+  const slug = slugify(game);	
+  advertName.value=prefix(productType.value)+slug+"-"+nextMonthCode();
 }
 
 function updateProviders(){
@@ -534,37 +535,51 @@ function updateProviders(){
     provider.appendChild(opt);
   });
 }
+	
+function slugify(text){
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}	
 
 function generateCode(){
-  const game=gameName.value;
+  const gameRaw = gameName.value;
+  const slug = slugify(gameRaw);   // 🔥 convert to slug
+  const type = productType.value;
+  const login = loginCheck.checked;
   const code=gameCode.value;
-  const type=productType.value;
-  const login=loginCheck.checked;
+  
 
-  let imageSrc="";
-  if(type==="Esports"){
-    imageSrc=`https://doc.188contents.com/taptap-content/images/esports/${game}/${game}.gif`;
+  let imageSrc = "";
+
+  if(type === "Esports"){
+    imageSrc = `https://doc.188contents.com/taptap-content/images/esports/${slug}/${slug}.gif`;
   }else{
-    imageSrc=`https://doc.188contents.com/taptap-content/images/${type.toLowerCase()}/${provider.value}/${game}/${game}.gif`;
+    imageSrc = `https://doc.188contents.com/taptap-content/images/${type.toLowerCase()}/${provider.value}/${slug}/${slug}.gif`;
   }
 
-  gifPreview.src=imageSrc;
+  gifPreview.src = imageSrc;
 
-  const tag=login?
-  `<FloatingBanner v-if="uv.sessionD.login">`:
-  `<FloatingBanner>`;
+  const tag = login
+    ? `<FloatingBanner v-if="uv.sessionD.login">`
+    : `<FloatingBanner>`;
 
-  codePreview.innerText=
+  codePreview.innerText =
 `${tag}
   <GameLauncher v-slot="{ openGame }" product="${type.toLowerCase()}" game="${code}"
     data-track-content data-content-name="Floating banner - (PD-${type})"
     data-content-piece="Floating banner">
-    <img alt="${game}" 
+    <img alt="${slug}" 
     src="${imageSrc}" 
     @click="openGame()"/>
   </GameLauncher>
 </FloatingBanner>`;
 }
+	
+
 
 /* ================= LOAD DATA ================= */	
 async function loadData(){
