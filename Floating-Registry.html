@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Floating Banner Automation</title>
+
+<style>
+:root{
+  --bg:#f8fafc;
+  --panel:#ffffff;
+  --border:#e2e8f0;
+  --text:#1e293b;
+  --sub:#64748b;
+  --accent:#ff6a00;
+  --danger:#dc2626;
+  --radius:10px;
+  --shadow:0 4px 20px rgba(0,0,0,0.05);
+  --font:"Inter",system-ui,-apple-system,sans-serif;
+}
+
+body.dark{
+  --bg:#0f172a;
+  --panel:#1e293b;
+  --border:#334155;
+  --text:#f1f5f9;
+  --sub:#94a3b8;
+  --accent:#3b82f6;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  height:100vh;
+  overflow:hidden;
+}
+
+.container{
+  display:flex;
+  height:100vh;
+  padding:20px;
+  gap:20px;
+}
+
+/* LEFT PANEL */
+.left{
+  width:25%;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+}
+
+h3{
+  margin-top:0;
+  margin-bottom:20px;
+  font-weight:600;
+}
+
+label{
+  font-size:13px;
+  color:var(--sub);
+  display:block;
+  margin-bottom:5px;
+}
+
+input,select{
+  width:100%;
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  font-size:14px;
+  margin-bottom:14px;
+}
+
+body.dark input,
+body.dark select{
+  background:#0f172a;
+  color:var(--text);
+}
+
+.row{
+  display:flex;
+  gap:10px;
+}
+
+.row > div{
+  flex:1;
+}
+
+.preview-box{
+  text-align:center;
+  margin-bottom:15px;
+}
+
+.preview-gif{
+  width:200px;
+  height:200px;
+  object-fit:contain;
+  border-radius:8px;
+  border:1px solid var(--border);
+}
+
+
+	
+.checkbox-row{
+  display:flex;
+  align-items:center;
+  gap:8px;                 /* space between checkbox and text */
+  margin:12px 0 18px 0;
+  font-size:14px;
+  font-weight:500;
+  color:#333;
+}
+
+.checkbox-row input[type="checkbox"]{
+  width:16px;
+  height:16px;
+  cursor:pointer;
+}
+
+.checkbox-row label{
+  cursor:pointer;
+  user-select:none;
+  line-height:1;
+}
+	
+
+button{
+  padding:8px 14px;
+  border-radius:6px;
+  border:none;
+  font-size:13px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+button.primary{
+  background:var(--accent);
+  color:white;
+}
+
+button.secondary{
+  color:#f1f5f9;	
+  background:var(--accent);
+}
+
+button.danger{
+  background:var(--danger);
+  color:white;
+}
+
+/* CODE PREVIEW */
+.code-container{
+  background:#0f172a;
+  color:#f1f5f9;
+  padding:12px;
+  border-radius:8px;
+  height:200px;	
+  max-height:200px;
+  overflow:auto;
+  font-size:12px;
+  margin:15px 0;
+}
+
+/* RIGHT PANEL */
+.right{
+  width:75%;
+  display:flex;
+  flex-direction:column;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+}
+
+/* TOP BAR */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+}
+
+.tabs{
+  display:flex;
+  gap:20px;
+  align-items:center;
+}
+
+.tab{
+  font-size:14px;
+  color:var(--sub);
+  cursor:pointer;
+  padding-bottom:4px;
+}
+
+.tab.active{
+  color:var(--accent);
+  border-bottom:2px solid var(--accent);
+  font-weight:500;
+}
+
+.actions-top{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.actions-top input{
+  width:220px;
+}
+
+.dark-toggle{
+  cursor:pointer;
+  font-size:16px;
+}
+
+/* TABLE */
+.table-wrapper{
+  flex:1;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+thead{
+  background:var(--bg);
+}
+
+th,td{
+  padding:10px;
+  border-bottom:1px solid var(--border);
+  text-align:center;
+}
+
+tbody{
+  display:block;
+  flex:1;
+  overflow-y:auto;
+}
+
+thead, tbody tr{
+  display:table;
+  width:100%;
+  table-layout:fixed;
+}
+
+tbody tr:hover{
+  background:#f1f5f9;
+}
+
+body.dark tbody tr:hover{
+  background:#1e293b;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- LEFT -->
+<div class="left">
+
+<div class="card">
+
+<h3>Floating Banner Form</h3>
+
+<!-- 1 Advert Name -->
+<label>Advert Name</label>
+<input type="text" id="advertName" readonly>
+
+<!-- 2 Preview -->
+<div class="preview-box">
+<img id="gifPreview" class="preview-gif">
+</div>
+
+<!-- 3 Game Name + Code -->
+<div class="row">
+<div>
+<label>Game Name</label>
+<input type="text" id="gameName">
+</div>
+<div>
+<label>Game Code</label>
+<input type="text" id="gameCode">
+</div>
+</div>
+
+<!-- 4 Product + Provider -->
+<div class="row">
+<div>
+<label>Product Type</label>
+<select id="productType">
+<option value="">Select</option>
+<option value="Casino">Casino</option>
+<option value="Live">Live</option>
+<option value="Chess">Chess</option>
+<option value="Lotto">Lotto</option>
+<option value="Esports">Esports</option>
+</select>
+</div>
+<div>
+<label>Provider</label>
+<select id="provider"></select>
+</div>
+</div>
+
+<!-- 5 Checkbox -->
+<div class="checkbox-row">
+<input type="checkbox" id="loginCheck">
+<label for="loginCheck">Require Login</label>
+</div>
+
+<!-- 6 Save -->
+<button class="primary" onclick="saveData()">Save</button>
+
+<!-- 7 Code Live Preview -->
+<div class="code-container">
+<pre id="codePreview"></pre>
+</div>
+
+<!-- 8 Copy -->
+<button class="secondary" onclick="copyCode()">Copy Code</button>
+
+</div>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+
+<div class="topbar">
+
+<div class="tabs">
+<div class="tab active" onclick="setFilter('All',this)">All</div>
+<div class="tab" onclick="setFilter('Casino',this)">Casino</div>
+<div class="tab" onclick="setFilter('Live',this)">Live</div>
+<div class="tab" onclick="setFilter('Chess',this)">Chess</div>
+<div class="tab" onclick="setFilter('Lotto',this)">Lotto</div>
+<div class="tab" onclick="setFilter('Esports',this)">Esports</div>
+</div>
+
+<div class="actions-top">
+<input type="text" id="search" placeholder="Search..." onkeyup="renderTable()">
+<span class="dark-toggle" onclick="toggleDark()">🌙</span>
+</div>
+
+</div>
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>GIF</th>
+<th>Advert Name</th>
+<th>Game Name</th>
+<th>Game Code</th>
+<th>Product Type</th>
+<th>Provider</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+<script>
+
+const API="https://script.google.com/macros/s/AKfycbwvAzIwdpxIvdW5HkZtPG-rte3twUkboy2Y-r8NHP3NuxvGGBFPXAmmKj_QrpiGH2bO/exec";
+
+const providers={
+  Casino: ['advantplay','betsoft','bigtimegaming','evolution','featured','floatingbanner','funkygames','galaxsys','genesis','habanero','hacksaw','isoftbet','jili','leap','mgplus','microgaming','netent','new-years-rising','nextspin','nolimitcity','originals','pgsoft','playngo','playngo1','playtech','playtech1','pocketgames','pragmatic','producthighlightstest','quickspin','redtiger','skywind','slotmill','spribe','spribe1'],
+  Live: ['Bull-Bull','Bull-Fight','FanTan','aesexy','agiledeal','asiagaming','baccarat','db','dblive','evolution','ezugi','featured','n2live','oncasino','playace','pragmatic','sexybaccarat','teenpatti','threecardwin','threepictures','wmcasino','worldentertainment','zodiacracing'],
+  Chess: ['jili','kaiyuan','kingmidas','mpoker','v8poker'],
+  Lotto: ['7star','agiledeal','agilenbg','australia','australialucky28','canada','india-lottery','keno','ladder','lotto','lucky28','lucky5','new-lobby','p3','pk10','rapid5d','sea-lottery','sode','super-lottery','tc-gaming','tcg_cn','tcg_sea','tcg_vn','xj'],
+};
+
+let registry=[];
+let activeFilter="All";
+let editIndex=null;
+
+function nextMonthCode(){
+  const d=new Date();
+  d.setMonth(d.getMonth()+1);
+  return String(d.getMonth()+1).padStart(2,"0")+String(d.getFullYear()).slice(-2);
+}
+
+function prefix(type){
+  return {
+    Casino:"csn-fb-",
+    Live:"lcsn-fb-",
+    Lotto:"lotto-fb-",
+    Chess:"chess-fb-",
+    Esports:"esp-fb-"
+  }[type]||"";
+}
+
+function updateAdvert(){
+  const game=gameName.value.toLowerCase().replace(/\s+/g,"-");
+  advertName.value=prefix(productType.value)+game+"-"+nextMonthCode();
+}
+
+function updateProviders(){
+  const type=productType.value;
+  provider.innerHTML="";
+
+  if(type==="Esports"){
+    provider.disabled=true;
+    return;
+  }
+
+  provider.disabled=false;
+
+  (providers[type]||[]).forEach(p=>{
+    const opt=document.createElement("option");
+    opt.value=p;
+    opt.text=p;
+    provider.appendChild(opt);
+  });
+}
+
+function generateCode(){
+  const game=gameName.value;
+  const code=gameCode.value;
+  const type=productType.value;
+  const login=loginCheck.checked;
+
+  let imageSrc="";
+  if(type==="Esports"){
+    imageSrc=`https://doc.188contents.com/taptap-content/images/esports/${game}/${game}.gif`;
+  }else{
+    imageSrc=`https://doc.188contents.com/taptap-content/images/${type.toLowerCase()}/${provider.value}/${game}/${game}.gif`;
+  }
+
+  gifPreview.src=imageSrc;
+
+  const tag=login?
+  `<FloatingBanner v-if="uv.sessionD.login">`:
+  `<FloatingBanner>`;
+
+  codePreview.innerText=
+`${tag}
+  <GameLauncher v-slot="{ openGame }" product="${type.toLowerCase()}" game="${code}"
+    data-track-content data-content-name="Floating banner - (PD-${type})"
+    data-content-piece="Floating banner">
+    <img alt="${game}" 
+    src="${imageSrc}" 
+    @click="openGame()"/>
+  </GameLauncher>
+</FloatingBanner>`;
+}
+
+/* ================= LOAD DATA ================= */	
+async function loadData(){
+  const res=await fetch(API);
+  registry=await res.json();
+  renderTable();
+}
+	
+/* ================= SAVE OR UPDATE ================= */	
+async function saveData(){
+  generateCode();
+
+  const data={
+    advertName:advertName.value,
+    gameName:gameName.value,
+    gameCode:gameCode.value,
+    productType:productType.value,
+    provider:provider.value||"",
+    generatedCode:codePreview.innerText
+  };
+
+  // If editing → UPDATE
+  if(editRowIndex){
+    data.action="update";
+    data.rowIndex=editRowIndex;
+  }
+
+  await fetch(API,{
+    method:"POST",
+    body:JSON.stringify(data)
+  });
+
+  alert(editRowIndex ? "Updated!" : "Saved!");
+
+  clearForm();
+  loadData();
+}
+
+
+
+
+	
+
+
+/* ================= EDIT ================= */
+
+function editRow(i){
+  const r=registry[i];
+
+  editRowIndex=r.rowIndex; // IMPORTANT
+  advertName.value=r.advertName;
+  gameName.value=r.gameName;
+  gameCode.value=r.gameCode;
+  productType.value=r.productType;
+  provider.value=r.provider;	
+
+  updateProviders();
+
+  if(r.productType!=="Esports"){
+    provider.value=r.provider;
+  }
+
+  generateCode();
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+
+	
+
+/* ================= DELETE ================= */
+
+async function deleteRow(i){
+  if(!confirm("Delete entry?")) return;
+
+  const rowIndex=registry[i].rowIndex;
+
+  await fetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"delete",
+      rowIndex:rowIndex
+    })
+  });
+
+  loadData();
+}
+
+function setFilter(type,el){
+  activeFilter=type;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  el.classList.add("active");
+  renderTable();
+}
+
+function copyCode(){
+  navigator.clipboard.writeText(codePreview.innerText);
+  alert("Copied!");
+}
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+}
+
+gameName.oninput=()=>{updateAdvert();generateCode();}
+gameCode.oninput=generateCode;
+productType.onchange=()=>{updateProviders();updateAdvert();generateCode();}
+provider.onchange=generateCode;
+loginCheck.onchange=generateCode;
+
+/* ================= RENDER TABLE ================= */
+
+function renderTable(){
+  const search=document.getElementById("search").value.toLowerCase();
+  const body=document.getElementById("tableBody");
+  body.innerHTML="";
+
+  registry
+  .filter(r=>activeFilter==="All"||r.productType===activeFilter)
+  .filter(r=>r.gameName?.toLowerCase().includes(search))
+  .forEach((r,i)=>{
+
+    let imgSrc="";
+    if(r.productType==="Esports"){
+      imgSrc=`https://doc.188contents.com/taptap-content/images/esports/${r.gameName}/${r.gameName}.gif`;
+    }else{
+      imgSrc=`https://doc.188contents.com/taptap-content/images/${r.productType?.toLowerCase()}/${r.provider}/${r.gameName}/${r.gameName}.gif`;
+    }
+
+    body.innerHTML+=`
+    <tr>
+      <td><img src="${imgSrc}" width="60"></td>
+	  <td>${r.advertName}</td>	  
+      <td>${r.gameName}</td>
+      <td>${r.gameCode}</td>
+      <td>${r.productType}</td>
+      <td>${r.provider||"-"}</td>
+      <td>
+        <button onclick="editRow(${i})">Edit</button>
+        <button class="danger" onclick="deleteRow(${i})">Delete</button>
+      </td>
+    </tr>`;
+  });
+}
+
+/* ================= CLEAR FORM ================= */
+
+function clearForm(){
+  editRowIndex=null;
+  gameName.value="";
+  gameCode.value="";
+  productType.value="";
+  provider.innerHTML="";
+  gifPreview.src="";
+  codePreview.innerText="";
+}
+
+		  
+
+/* ================= INIT ================= */
+
+loadData();
+
+</script>
+
+</body>
+</html>
