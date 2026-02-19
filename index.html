@@ -21,14 +21,15 @@
       background-color: #333;
       color: white;
     }
-
+	
+	  
     nav {
       display: flex;
       justify-content: center;
       background-color: #444;
     }
 
-    nav button {
+    nav button , .registry{
       padding: 14px 28px;
       background-color: #ff6a00;
       color: white;
@@ -39,6 +40,7 @@
       margin: 10px;
       border-radius: 6px;
     }
+	  
 
     nav button:hover {
       background-color: #A54400;
@@ -62,7 +64,12 @@
     <button onclick="loadPage('Virtual.html')">Virtual</button>
 	<button onclick="loadPage('Highlight.html')">Highlight</button>
 	<button onclick="loadPage('Floating.html')">Floating</button> 
-	<button onclick="loadPage('PD-Newsletter.html')">PD-Newsletter</button> 
+	<button onclick="loadPage('PD-Newsletter.html')">PD-Newsletter</button>   
+  </nav>
+<nav>
+    
+	<a class="registry" href="Floating-Registry.html">Floating Banner</a> 
+	 
   </nav>
 
   <iframe id="contentFrame" src=""></iframe>
