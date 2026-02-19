@@ -397,7 +397,7 @@ const providers={
 
 let registry=[];
 let activeFilter="All";
-let editIndex=null;
+let editRowIndex = null;	
 
 function nextMonthCode(){
   const d=new Date();
@@ -490,7 +490,6 @@ async function saveData(){
     generatedCode:codePreview.innerText
   };
 
-  // If editing → UPDATE
   if(editRowIndex !== null){
     data.action="update";
     data.rowIndex=editRowIndex;
@@ -501,7 +500,7 @@ async function saveData(){
     body:JSON.stringify(data)
   });
 
-  alert(editRowIndex ? "Updated!" : "Saved!");
+  alert(editRowIndex !== null ? "Updated!" : "Saved!");
 
   clearForm();
   loadData();
@@ -604,7 +603,7 @@ function renderTable(){
       body.innerHTML += `
         <tr>
           <td><img src="${imgSrc}" width="60"></td>
-          <td>${r.adverName}</td>
+          <td>${r.advertName}</td>
           <td>${r.gameName}</td>
           <td>${r.gameCode}</td>
           <td>${r.productType}</td>
