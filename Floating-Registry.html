@@ -228,12 +228,14 @@ button.danger{
 }
 
 /* TABLE */
+/*
 .table-wrapper{
   flex:1;
   overflow:hidden;
   display:flex;
   flex-direction:column;
 }
+*/
 
 table{
   width:100%;
@@ -270,6 +272,40 @@ tbody tr:hover{
 body.dark tbody tr:hover{
   background:#1e293b;
 }
+
+.table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* Make only tbody scroll */
+.table-section table {
+  width: 100%;
+  border-collapse: collapse;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.table-section thead {
+  flex: 0 0 auto;
+}
+
+.table-section tbody {
+  flex: 1 1 auto;
+  overflow-y: auto;   /* THIS MAKES IT SCROLL */
+  display: block;
+}
+
+.table-section thead tr,
+.table-section tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}	
+
+	
 </style>
 </head>
 <body>
@@ -364,6 +400,7 @@ body.dark tbody tr:hover{
 
 </div>
 
+<!--
 <div class="table-wrapper">
 <table>
 <thead>
@@ -380,6 +417,24 @@ body.dark tbody tr:hover{
 <tbody id="tableBody"></tbody>
 </table>
 </div>
+-->
+	
+<div class="table-section">
+    <table>
+      <thead>
+       <tr>
+		<th>GIF</th>
+		<th>Advert Name</th>
+		<th>Game Name</th>
+		<th>Game Code</th>
+		<th>Product Type</th>
+		<th>Provider</th>
+		<th>Action</th>
+		</tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>	
 
 </div>
 </div>
