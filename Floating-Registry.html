@@ -556,10 +556,14 @@ function generateCode(){
   let imageSrc = "";
 
   if(type === "Esports"){
-    imageSrc = `https://doc.188contents.com/taptap-content/images/esports/${slug}/${slug}.gif`;
+  imageSrc = `https://doc.188contents.com/taptap-content/images/esports/${slug}/${slug}.gif`;
+
+  }else if(type === "Chess"){
+	imageSrc = `https://doc.188contents.com/taptap-content/images/${type.toLowerCase()}/en-gb/${provider.value}/${slug}/${slug}.gif`;
+	
   }else{
-    imageSrc = `https://doc.188contents.com/taptap-content/images/${type.toLowerCase()}/${provider.value}/${slug}/${slug}.gif`;
-  }
+	  imageSrc = `https://doc.188contents.com/taptap-content/images/${type.toLowerCase()}/${provider.value}/${slug}/${slug}.gif`;
+ }
 
   gifPreview.src = imageSrc;
 
@@ -769,3 +773,4 @@ loadData();
 
 </body>
 </html>
+
