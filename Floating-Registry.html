@@ -724,7 +724,9 @@ filtered.forEach((r,i)=>{
       let imgSrc="";
 
       if(r.productType==="Esports"){
-        imgSrc=`https://doc.188contents.com/taptap-content/images/esports/${r.gameName}/${r.gameName}.gif`;
+        imgSrc=`https://doc.188contents.com/taptap-content/images/esports/${r.gameName}/${r.gameName}.gif`;  
+      }else if(r.productType==="Chess"){
+        imgSrc=`https://doc.188contents.com/taptap-content/images/chess/en-gb/${r.provider}/${r.gameName}/${r.gameName}.gif`;
       }else{
         imgSrc=`https://doc.188contents.com/taptap-content/images/${(r.productType || "").toLowerCase()}/${r.provider}/${r.gameName}/${r.gameName}.gif`;
       }
@@ -773,4 +775,5 @@ loadData();
 
 </body>
 </html>
+
 
