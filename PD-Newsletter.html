@@ -141,6 +141,22 @@ button{
     box-shadow:0 8px 30px rgba(0,0,0,.15);
 }
 .dark .preview{background:#fff}
+	
+.input-notice {
+  font-size: 12px;
+  font-weight: bold;	
+  margin-bottom: 6px;
+  min-height: 16px;
+  transition: all 0.2s ease;
+}
+
+.input-notice.error {
+  color: #d93025;
+}
+
+.input-notice.success {
+  color: #188038;
+}	
 </style>
 </head>
 
@@ -179,6 +195,7 @@ button{
 	
 <div class="card">
 <h4>HTML Settings</h4>
+<div id="fileNameNotice" class="input-notice"></div>	
 <input id="fileName"
        oninput="this.value=this.value.toLowerCase();updateAltLink();render();" required>
 	<input id="htmlTitle" placeholder="HTML Title" oninput="render()" required>
@@ -201,6 +218,7 @@ button{
 <div class="topbar">
 <strong>Live Preview</strong>
 <div class="row">
+	
     <input type="file" id="importFile" accept=".html" hidden>
     <button class="icon-btn" onclick="document.getElementById('importFile').click()" title="Import HTML">📥</button>
     <button class="icon-btn" onclick="toggleDark()" id="darkIcon">🌙</button>
@@ -1171,27 +1189,51 @@ document.getElementById("importFile").addEventListener("change", function () {
   // Reset input so same file can be re-imported
   this.value = "";
 });
+	
 function updateAltLink() {
+
   const fileName = document.getElementById("fileName").value.trim();
   const altLink = document.getElementById("altLink");
 
-  // reset if empty
+  altLink.value = "";
+
+  // If empty → clear message completely
   if (!fileName) {
-    altLink.value = "";
+    showNotification("", "");
     return;
   }
 
-  // expected: region_pdnewsletter-mmyy
   const match = fileName.match(/^([a-z]{2}-[a-z]{2})_pdnewsletter-(\d{2})(\d{2})$/i);
+
   if (!match) {
-    altLink.value = "";
+    showNotification("Invalid filename format. Use: region_pdnewsletter-mmyy", "error");
     return;
   }
 
-  const region = match[1].toLowerCase();
+  let region = match[1].toLowerCase();
   const mm = match[2];
   const yy = match[3];
   const mmyy = mm + yy;
+
+  const regionMap = {
+    "en-cn": "zh-cn",
+    "zh-cn": "zh-cn",
+    "en-vn": "vi-vn",
+    "vi-vn": "vi-vn",
+    "en-id": "id-id",
+    "id-id": "id-id",
+    "en-th": "th-th",
+    "th-th": "th-th",
+    "en-jp": "ja-jp",
+    "ja-jp": "ja-jp"
+  };
+
+  if (!regionMap[region]) {
+    showNotification("Region not supported.", "error");
+    return;
+  }
+
+  region = regionMap[region];
 
   const monthMap = {
     "01": "01-Jan", "02": "02-Feb", "03": "03-Mar", "04": "04-Apr",
@@ -1200,12 +1242,24 @@ function updateAltLink() {
   };
 
   if (!monthMap[mm]) {
-    altLink.value = "";
+    showNotification("Invalid month in filename.", "error");
     return;
   }
 
+  // ✅ Success
   altLink.value =
     `https://188affiliates.com/newsletter/newsletter-template-2026/${region}/${monthMap[mm]}/alternate/${region}_pdnewsletter-${mmyy}.html`;
+
+  showNotification("Filename valid ✓", "success");
+}
+	
+function showNotification(message, type = "error") {
+
+  const notice = document.getElementById("fileNameNotice");
+  if (!notice) return;
+
+  notice.textContent = message;
+  notice.className = "input-notice " + type;
 }
 
 function importHTML(htmlText) {
