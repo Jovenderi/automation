@@ -159,7 +159,7 @@ button{
 
     <!-- Country Select -->
     <select id="countryVersion"
-            disabled
+            
             onchange="render()"
             style="min-width:140px;padding:8px;border-radius:8px;border:1px solid var(--border);">
         <option value="">Country</option>
@@ -179,9 +179,10 @@ button{
 	
 <div class="card">
 <h4>HTML Settings</h4>
-<input id="fileName" placeholder="File name (region_pdnewsletter-mmyy)" oninput="updateAltLink()">
-	<input id="htmlTitle" placeholder="HTML Title" oninput="render()">
-<input id="altLink" placeholder="Alternate Link" readonly>	
+<input id="fileName"
+       oninput="this.value=this.value.toLowerCase();updateAltLink();render();" required>
+	<input id="htmlTitle" placeholder="HTML Title" oninput="render()" required>
+<input id="altLink" placeholder="Alternate Link" readonly required>	
 </div>
 
 
@@ -203,7 +204,7 @@ button{
     <input type="file" id="importFile" accept=".html" hidden>
     <button class="icon-btn" onclick="document.getElementById('importFile').click()" title="Import HTML">📥</button>
     <button class="icon-btn" onclick="toggleDark()" id="darkIcon">🌙</button>
-    <button class="primary" onclick="downloadHTML()">Download</button>
+    <button class="primary" onclick="validateAndDownload()">Download</button>
 </div>
 </div>
 
@@ -216,13 +217,29 @@ button{
 
 <script>
 let dark=false;
+	
+	
 
 function toggleDark(){
     dark=!dark;
     document.body.classList.toggle("dark",dark);
     document.getElementById("darkIcon").textContent = dark ? "☀️" : "🌙";
 }
-	
+function generateDefaultFileName() {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const year = String(today.getFullYear()).slice(-2);
+
+    const defaultRegion = "en-gb_"; // change default region here
+
+    return `${defaultRegion}pdnewsletter-${month}${year}`;
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("fileName");
+    input.value = generateDefaultFileName();
+    render();
+});	
 
 function addGame(data={}){
     const g=document.createElement("div");
@@ -236,13 +253,13 @@ function addGame(data={}){
         </div>
     </div>
     <div class="game-body">
-        <input placeholder="Provider Name" class="provider" value="${data.provider||""}">
-        <input placeholder="Game Name" class="gameName" value="${data.game||""}">
-        <input placeholder="Image Name" class="image" value="${data.image||""}">
-        <textarea placeholder="Description" class="desc">${data.desc||""}</textarea>
+        <input placeholder="Provider Name" class="provider" id="provider" value="${data.provider||""}" required>
+        <input placeholder="Game Name" class="gameName" id="gameName" value="${data.game||""}" required>
+        <input placeholder="Image Name" class="image" id="image" value="${data.image||""}" required>
+        <textarea placeholder="Description" class="desc" id="desc" required>${data.desc||""}</textarea >
         <div class="row">
-            <input placeholder="Button Name" class="btnName" value="${data.btnName||""}">
-            <input placeholder="Button Link" class="btnLink" value="${data.btnLink||""}">
+            <input placeholder="Button Name" class="btnName" id="btnName" value="${data.btnName||""}" required>
+            <input placeholder="Button Link" class="btnLink" id="btnLink" value="${data.btnLink||""}" required>
         </div>
     </div>
     `;
@@ -277,11 +294,44 @@ function toggleCountryOption(){
     render();
 }	
 
+const ALT_LANGUAGE_MAP = {
+    "en-": {
+        text: "Can't see email?",
+        link: "Click here"
+    },
+    "zh-": {
+        text: "若无法查看内容",
+        link: "请点击这里"
+    },
+    "vi-": {
+        text: "Nếu Quý Khách không thể xem email dưới đây,",
+        link: "(xin nhấn vào đây)"
+    },
+    "th-": {
+        text: "Can't see email?",
+        link: "Click here"
+    },
+    "id-": {
+        text: "Tidak dapat melihat email ini,",
+        link: "klik di sini"
+    },
+    "ja-": {
+        text: "メールが見られませんか？",
+        link: "こちらをクリック"
+    }
+};
+	
 function render(){
     const title=document.getElementById("htmlTitle").value||"HTML Title";
     const alt=document.getElementById("altLink").value||"#";
 	const useAltLogo = document.getElementById("useAltLogo").checked;
 	const country = document.getElementById("countryVersion").value;
+	const fileName = document.getElementById("fileName").value || "";
+let regionPrefix = Object.keys(ALT_LANGUAGE_MAP).find(prefix => fileName.startsWith(prefix));
+if(!regionPrefix) regionPrefix = "en-"; // default fallback
+
+const altTextData = ALT_LANGUAGE_MAP[regionPrefix];
+	
 	const COUNTRY_TABLES = {
     ENCN: `
 <table id="ENCN" align="center" bgcolor="#262626" cellpadding="0" cellspacing="0" style="margin: 0 auto; padding: 0; text-align: center; background-color: #262626; border-collapse: collapse;" width="600">
@@ -853,6 +903,13 @@ function render(){
 		
 };
 	
+const ALT_BLOCK = `
+<div style="margin: 0 auto; font-size: 12px; text-align: right; max-width: 600px;">
+    <p style="margin: 0; padding: 0; display: none;">${title}</p>
+    <p style="color: #808080; margin: 0; padding: 0;">${altTextData.text}</p>
+    <a href="${alt}" style="color: #FF8A00;">${altTextData.link}</a>
+</div>
+`;
 	
     let html=`
 <!DOCTYPE html>
@@ -891,13 +948,7 @@ if(useAltLogo){
     </table>
 `;
 }else{
-    html+=`
-<div style="margin: 0 auto; font-size: 12px; text-align: right; max-width: 600px;">
-        <p id="preview-text" style="margin: 0; padding: 0; display: none;">${title}</p>
-        <p id="cant-see-email" style="color: #808080; margin: 0; padding: 0;">Can't see email?</p>
-        <a id="alt-link" href="${alt}" style="color: #FF8A00;">Click here</a>
-    </div>	
-`;
+    html += ALT_BLOCK;
 }	
 	
 	
@@ -959,7 +1010,63 @@ if (country && COUNTRY_TABLES[country]) {
     window.generatedHTML=html;
 }
 
+	
+function validateAndDownload() {
 
+  let hasError = false;
+
+  // 1️⃣ Validate Static Required Fields
+  const staticRequired = ["fileName", "htmlTitle"];
+
+  staticRequired.forEach(id => {
+    const field = document.getElementById(id);
+    if (!field || !field.value.trim()) {
+      if (field) field.style.border = "1px solid red";
+      hasError = true;
+    } else {
+      field.style.border = "";
+    }
+  });
+
+  // 2️⃣ Validate Dynamic Game Blocks
+  const games = document.querySelectorAll(".game");
+
+  if (games.length === 0) {
+    alert("Please add at least one game.");
+    return;
+  }
+
+  games.forEach(game => {
+    const requiredFields = game.querySelectorAll("input, textarea");
+
+    requiredFields.forEach(field => {
+      if (!field.value.trim()) {
+        field.style.border = "1px solid red";
+        hasError = true;
+      } else {
+        field.style.border = "";
+      }
+    });
+  });
+
+  if (hasError) {
+    alert("Please complete all required fields before downloading.");
+    return;
+  }
+
+  // 3️⃣ Validate filename prefix
+  const fileName = document.getElementById("fileName").value.trim();
+  const validPrefix = /^(en-|zh-|vi-|th-|id-|ja-)/;
+
+  if (!validPrefix.test(fileName)) {
+    alert("Filename must start with a valid region prefix (en-, zh-, vi-, th-, id-, ja-).");
+    document.getElementById("fileName").style.border = "1px solid red";
+    return;
+  }
+
+  // ✅ Everything valid
+  downloadHTML();
+}
 	
 function downloadHTML() {
   let name = document.getElementById("fileName").value.trim();
@@ -987,28 +1094,83 @@ addGame();
 
 	
 document.getElementById("importFile").addEventListener("change", function () {
+
   const file = this.files[0];
   if (!file) return;
 
-  // Get filename without extension
-  const baseName = file.name.replace(/\.[^/.]+$/, "");
-
-  // Store for later use (download, UI, etc.)
-  window.importedFileName = baseName;
-
-  // Optional: auto-fill the filename input
-  const fileNameInput = document.getElementById("fileName");
-  if (fileNameInput) {
-    fileNameInput.value = baseName;
-  }
-
   const reader = new FileReader();
-  reader.onload = e => {
-    importHTML(e.target.result);
+
+  reader.onload = function (e) {
+
+    const htmlContent = e.target.result;
+
+    /* ================================
+       1️⃣ Set Filename (without .html)
+    ================================== */
+    const baseName = file.name.replace(/\.[^/.]+$/, "");
+    const fileNameInput = document.getElementById("fileName");
+
+    if (fileNameInput) {
+      fileNameInput.value = baseName.toLowerCase();
+    }
+
+    /* ================================
+       2️⃣ Rebuild UI FIRST
+    ================================== */
+    importHTML(htmlContent);
+
+    /* ================================
+       3️⃣ Parse HTML safely
+    ================================== */
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, "text/html");
+
+    /* ================================
+       4️⃣ Extract ALT link correctly
+          (Find link near "Can't see" text)
+    ================================== */
+
+    let altURL = "";
+
+    // Try most accurate selector first
+    const altById = doc.querySelector("#alt-link");
+    if (altById) {
+      altURL = altById.getAttribute("href");
+    }
+
+    // Fallback: find link inside top 600px container
+    if (!altURL) {
+      const containers = doc.querySelectorAll("div[style*='max-width: 600px']");
+      containers.forEach(div => {
+        const link = div.querySelector("a[href]");
+        if (link && !altURL) {
+          altURL = link.getAttribute("href");
+        }
+      });
+    }
+
+    /* ================================
+       5️⃣ Set altLink input
+    ================================== */
+    const altInput = document.getElementById("altLink");
+    if (altInput) {
+      altInput.value = altURL || "";
+    }
+
+    /* ================================
+       6️⃣ Refresh preview AFTER everything
+    ================================== */
+    setTimeout(() => {
+      render();
+    }, 0);
+
   };
+
   reader.readAsText(file);
-});	
-	
+
+  // Reset input so same file can be re-imported
+  this.value = "";
+});
 function updateAltLink() {
   const fileName = document.getElementById("fileName").value.trim();
   const altLink = document.getElementById("altLink");
